@@ -13,12 +13,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.relojandroid.engine.PixelMatrix
 import kotlinx.coroutines.flow.StateFlow
+import android.view.WindowManager
 
 @Composable
 fun PixelClockScreen(
@@ -84,17 +84,15 @@ private fun KeepScreenOn() {
     DisposableEffect(Unit) {
         val window = (context as? android.app.Activity)?.window
         window?.let {
-            WindowCompat.setKeepScreenOn(it, true)
-            WindowCompat.getInsetsController(it, it.decorView).let { controller ->
+            it.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            WindowInsetsControllerCompat(it, it.decorView).let { controller ->
                 controller.hide(WindowInsetsCompat.Type.systemBars())
                 controller.systemBarsBehavior =
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
         }
         onDispose {
-            window?.let {
-                WindowCompat.setKeepScreenOn(it, false)
-            }
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 }

@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -21,7 +22,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -29,9 +29,9 @@ class WebServer(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
     private val faces: List<Face>,
-    private val engine: FaceEngine
+    private val faceEngine: FaceEngine
 ) {
-    private var server: io.ktor.server.engine.ApplicationEngine? = null
+    private var server: EmbeddedServer<*, *>? = null
 
     fun start(port: Int) {
         stop()
@@ -51,7 +51,7 @@ class WebServer(
         }
         install(StatusPages) {
             exception<Throwable> { call, cause ->
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (cause.message ?: "Unknown error"))
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (cause.message ?: "Unknown error")))
             }
         }
 
@@ -88,15 +88,15 @@ class WebServer(
                 val settings = settingsRepository.settings.first()
                 call.respond(
                     StatusResponse(
-                        currentFaceId = engine.currentFaceId.value,
-                        currentFaceName = engine.currentFaceName.value,
+                        currentFaceId = faceEngine.currentFaceId.value,
+                        currentFaceName = faceEngine.currentFaceName.value,
                         serverPort = settings.serverPort
                     )
                 )
             }
 
             get("/api/preview") {
-                val matrix = engine.matrix.value
+                val matrix = faceEngine.matrix.value
                 call.respond(
                     PreviewResponse(
                         width = matrix.width,
