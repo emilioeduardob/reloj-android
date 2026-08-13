@@ -56,20 +56,32 @@ private fun PixelCanvas(
         val offsetX = (size.width - totalW) / 2f
         val offsetY = (size.height - totalH) / 2f
 
-        val gap = 0.12f * cellSize
+        val gap = 0.08f * cellSize
         val dotSize = cellSize - 2 * gap
-        val corner = dotSize * 0.25f
+        val corner = dotSize * 0.06f
 
         for (y in 0 until matrix.height) {
             for (x in 0 until matrix.width) {
                 val color = matrix[x, y]
                 if (color == Color.Black) continue
+
+                val left = offsetX + x * cellSize + gap
+                val top = offsetY + y * cellSize + gap
+
+                // Soft glow / shadow behind the pixel.
+                val glowSize = dotSize * 1.25f
+                val glowOffset = (glowSize - dotSize) / 2f
+                drawRoundRect(
+                    color = color.copy(alpha = 0.28f),
+                    topLeft = Offset(left - glowOffset, top - glowOffset),
+                    size = Size(glowSize, glowSize),
+                    cornerRadius = CornerRadius(glowSize * 0.06f, glowSize * 0.06f)
+                )
+
+                // Main pixel: almost square with a tiny rounding.
                 drawRoundRect(
                     color = color,
-                    topLeft = Offset(
-                        offsetX + x * cellSize + gap,
-                        offsetY + y * cellSize + gap
-                    ),
+                    topLeft = Offset(left, top),
                     size = Size(dotSize, dotSize),
                     cornerRadius = CornerRadius(corner, corner)
                 )
