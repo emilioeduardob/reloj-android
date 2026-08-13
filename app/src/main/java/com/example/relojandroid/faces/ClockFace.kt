@@ -19,22 +19,22 @@ class ClockFace : Face {
 
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
+    // LaMetric layout: 8x8 color art on the left, large time in the remaining 29 cols.
+    private val artSize = 8
+    private val mainDisplayWidth = PixelMatrix.WIDTH - artSize
+
     override suspend fun render(settings: Settings): PixelMatrix {
         val now = Calendar.getInstance()
         val timeStr = timeFormat.format(now.time)
         val art = ClockArt.fromId(settings.clockArt)
 
         val timeWidth = measureBigString(timeStr)
-
-        // Center the big time vertically; place it on the right side.
-        val timeX = PixelMatrix.WIDTH - timeWidth - 4
+        // Center the time in the main (right) display area.
+        val timeX = artSize + (mainDisplayWidth - timeWidth) / 2
         val timeY = (PixelMatrix.HEIGHT - 7) / 2
 
-        // Center the art vertically on the left side.
-        val artY = (PixelMatrix.HEIGHT - 8) / 2
-
         var matrix = PixelMatrix.empty()
-            .drawClockArt(art, offsetX = 4, offsetY = artY)
+            .drawClockArt(art, offsetX = 0, offsetY = 0)
             .drawBigString(timeStr, timeX, timeY, Color(0xFFFFFFFF))
 
         // Blinking colon: dim it every other second.
