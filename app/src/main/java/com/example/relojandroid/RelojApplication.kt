@@ -1,7 +1,6 @@
 package com.example.relojandroid
 
 import android.app.Application
-import android.os.PowerManager
 import com.example.relojandroid.data.SettingsRepository
 import com.example.relojandroid.engine.FaceEngine
 import com.example.relojandroid.server.WebServer
@@ -37,13 +36,5 @@ class RelojApplication : Application() {
         applicationScope.launch {
             faceEngine.run()
         }
-
-        // Acquire a partial wake lock to keep the CPU running while the clock is active.
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        val wakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "RelojAndroid::ClockWakeLock"
-        )
-        wakeLock.acquire(10 * 60 * 1000L) // 10 minute timeout; will be re-acquired as needed by keep-screen-on.
     }
 }
