@@ -124,6 +124,9 @@ private val bigDigits = mapOf(
 
 private val bigSymbols = mapOf(
     ':' to listOf("000", "000", "010", "000", "010", "000", "000"),
+    'C' to listOf("01110", "10001", "10000", "10000", "10000", "10001", "01110"),
+    'F' to listOf("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
+    '°' to listOf("01110", "10001", "10001", "01110", "00000", "00000", "00000"),
 )
 
 private val bigGlyphs = bigDigits + bigSymbols
