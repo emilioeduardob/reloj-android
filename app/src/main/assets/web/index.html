@@ -89,6 +89,14 @@
         <label for="lon">Longitude</label>
         <input id="lon" type="number" step="any">
 
+        <label for="clockArt">Clock art</label>
+        <select id="clockArt">
+            <option value="ABSTRACT">Abstract</option>
+            <option value="FLOWER">Flower</option>
+            <option value="HEART">Heart</option>
+            <option value="WEATHER">Weather</option>
+        </select>
+
         <br><br>
         <button id="save">Save Settings</button>
     </div>
@@ -110,6 +118,7 @@
             document.getElementById('city').value = settings.weatherCity;
             document.getElementById('lat').value = settings.weatherLat;
             document.getElementById('lon').value = settings.weatherLon;
+            document.getElementById('clockArt').value = settings.clockArt || 'ABSTRACT';
 
             const facesEl = document.getElementById('faces');
             facesEl.innerHTML = '';
@@ -139,6 +148,7 @@
             settings.weatherCity = document.getElementById('city').value;
             settings.weatherLat = parseFloat(document.getElementById('lat').value);
             settings.weatherLon = parseFloat(document.getElementById('lon').value);
+            settings.clockArt = document.getElementById('clockArt').value;
 
             await fetch(`${API}/settings`, {
                 method: 'POST',
