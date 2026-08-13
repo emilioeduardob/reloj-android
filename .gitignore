@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android SDK (downloaded locally)
+android-sdk/
+
+# Local configuration
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Build outputs
+app/build/
+*.apk
+*.ap_
+*.aab
+
+# Captures
+captures/
+
+# Keystore files
+*.jks
+*.keystore
