@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowCompat
 import com.example.relojandroid.ui.PixelClockScreen
 import com.example.relojandroid.ui.theme.RelojAndroidTheme
 
@@ -17,7 +16,6 @@ class MainActivity : ComponentActivity() {
         application = this.applicationContext as RelojApplication
 
         enableEdgeToEdge()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             RelojAndroidTheme {

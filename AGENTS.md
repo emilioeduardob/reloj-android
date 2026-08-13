@@ -11,11 +11,11 @@ See `plan.md` for the original product plan.
 
 ## Technology stack
 
-- Kotlin 2.0.20
+- Kotlin 2.1.10
 - Jetpack Compose (Canvas-based pixel renderer)
-- Android Gradle Plugin 8.5.2 / Gradle 8.7
-- minSdk / targetSdk / compileSdk = 34
-- Ktor server (CIO) + Ktor client (CIO)
+- Android Gradle Plugin 8.9.1 / Gradle 8.12.1
+- minSdk / targetSdk = 34, compileSdk = 35
+- Ktor 3.x server (CIO) + Ktor 3.x client (CIO)
 - DataStore Preferences for settings
 - Kotlinx Serialization
 

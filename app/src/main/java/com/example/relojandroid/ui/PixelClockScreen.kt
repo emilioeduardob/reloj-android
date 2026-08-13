@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.relojandroid.engine.PixelMatrix
 import kotlinx.coroutines.flow.StateFlow
 
@@ -25,7 +25,7 @@ fun PixelClockScreen(
     matrixFlow: StateFlow<PixelMatrix>,
     modifier: Modifier = Modifier
 ) {
-    val matrix by matrixFlow.collectAsState()
+    val matrix by matrixFlow.collectAsStateWithLifecycle()
 
     // Keep screen on and immersive while this screen is visible.
     KeepScreenOn()
