@@ -20,6 +20,12 @@ app/build/
 *.ap_
 *.aab
 
+# Python venv (used for local image processing)
+.venv/
+
+# Kotlin daemon metadata
+.kotlin/
+
 # Captures
 captures/
 
