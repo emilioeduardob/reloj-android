@@ -70,8 +70,11 @@ data class PixelMatrix(
     }
 
     companion object {
-        const val WIDTH = 64
-        const val HEIGHT = 32
+        // LaMetric TIME form factor: 37 columns × 8 rows total.
+        // Leftmost 8×8 area is the color pixel-art section; the rest is the
+        // monochrome main display.
+        const val WIDTH = 37
+        const val HEIGHT = 8
 
         fun empty(width: Int = WIDTH, height: Int = HEIGHT): PixelMatrix =
             PixelMatrix(width, height)

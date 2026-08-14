@@ -7,17 +7,6 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.drawString
 
-private fun String.normalize(): String {
-    return this
-        .replace("á", "a").replace("Á", "A")
-        .replace("é", "e").replace("É", "E")
-        .replace("í", "i").replace("Í", "I")
-        .replace("ó", "o").replace("Ó", "O")
-        .replace("ú", "u").replace("Ú", "U")
-        .replace("ñ", "n").replace("Ñ", "N")
-        .replace("ü", "u").replace("Ü", "U")
-}
-
 class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
     override val id = "weather"
     override val name = "Weather"
@@ -38,37 +27,15 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
             cachedResult!!
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawString("WEATHER", 2, 2, Color(0xFFFF0000))
-                .drawString("NO DATA", 2, 12, Color(0xFFFF5500))
+                .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
         }
 
-        val tempStr = "${weather.temperature.toInt()}°C"
-        val cityStr = settings.weatherCity.normalize().uppercase().take(10)
-        val codeStr = weatherCodeLabel(weather.weatherCode)
+        val tempStr = "${weather.temperature.toInt()} C"
+        val matrix = PixelMatrix.empty()
 
-        var matrix = PixelMatrix.empty()
-            .drawString(cityStr, 2, 2, Color(0xFF00AAFF))
-            .drawString(tempStr, 2, 12, Color(0xFFFFFF00))
-            .drawString(codeStr, 2, 22, Color(0xFF00FF00))
-
-        // 8x8 weather icon on the right side.
-        matrix = drawIcon(matrix, weather.weatherCode, weather.isDay, 46, 8)
-
-        return matrix
-    }
-
-    private fun weatherCodeLabel(code: Int): String {
-        return when (code) {
-            0 -> "CLEAR"
-            1, 2, 3 -> "CLOUDY"
-            45, 48 -> "FOG"
-            51, 53, 55 -> "DRIZZLE"
-            61, 63, 65 -> "RAIN"
-            71, 73, 75 -> "SNOW"
-            80, 81, 82 -> "SHOWERS"
-            95, 96, 99 -> "STORM"
-            else -> "?"
-        }.take(9)
+        // Single-line layout: 8x8 icon on the left, temperature on the right.
+        return drawIcon(matrix, weather.weatherCode, weather.isDay, 0, 0)
+            .drawString(tempStr, 9, 2, Color(0xFFFFFF00))
     }
 
     private fun drawIcon(
@@ -119,7 +86,7 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
 }
 
 /**
- * 8x8 pixel weather icons extracted from the provided reference sheet.
+ * 8x8 pixel weather icons.
  * Values: 0 = transparent, 1 = white, 2 = yellow.
  */
 private enum class WeatherIcon(val pixels: List<List<Int>>) {

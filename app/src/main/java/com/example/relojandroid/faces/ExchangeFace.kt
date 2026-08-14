@@ -27,17 +27,17 @@ class ExchangeFace(private val api: ExchangeApi = ExchangeApi()) : Face {
             cachedResult!!
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawString("DOLAR", 2, 2, Color(0xFFFF0000))
-                .drawString("NO DATA", 2, 12, Color(0xFFFF5500))
+                .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
         }
 
-        val buyStr = "C:${formatRate(exchange.buy)}"
-        val sellStr = "V:${formatRate(exchange.sell)}"
+        // Alternate between buy and sell every 3 seconds on a single line.
+        val showBuy = (now / 3000) % 2 == 0L
+        val label = if (showBuy) "C" else "V"
+        val rate = if (showBuy) exchange.buy else exchange.sell
+        val line = "$label:${formatRate(rate)}"
 
         return PixelMatrix.empty()
-            .drawString("USD/PYG", 2, 2, Color(0xFF00FF00))
-            .drawString(buyStr, 2, 12, Color(0xFFFFFF00))
-            .drawString(sellStr, 2, 22, Color(0xFFFFAA00))
+            .drawString(line, 2, 2, Color(0xFFFFFF00))
     }
 
     private fun formatRate(rate: Double): String {
