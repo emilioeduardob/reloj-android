@@ -12,6 +12,11 @@ class FaceEngine(
     private val faces: List<Face>,
     private val settingsFlow: Flow<Settings>
 ) {
+
+    companion object {
+        private const val DEFAULT_REFRESH_MS = 200L
+        private const val ANIMATED_REFRESH_MS = 50L
+    }
     private val _matrix = MutableStateFlow(PixelMatrix.empty())
     val matrix: StateFlow<PixelMatrix> = _matrix
 
@@ -39,6 +44,8 @@ class FaceEngine(
                 _currentFaceName.value = face.name
                 val faceStart = System.currentTimeMillis()
                 val durationMs = settings.rotationSeconds * 1000L
+                val animated = face.isAnimated(settings)
+                val refreshMs = if (animated) ANIMATED_REFRESH_MS else DEFAULT_REFRESH_MS
 
                 // Render face repeatedly until its turn expires.
                 while (System.currentTimeMillis() - faceStart < durationMs) {
@@ -47,7 +54,7 @@ class FaceEngine(
                     } catch (e: Exception) {
                         renderError(e.message ?: "ERR")
                     }
-                    delay(200) // ~5 FPS internal refresh
+                    delay(refreshMs)
                 }
             }
         }

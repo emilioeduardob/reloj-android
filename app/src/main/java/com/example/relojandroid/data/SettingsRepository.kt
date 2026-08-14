@@ -34,6 +34,10 @@ class SettingsRepository(private val context: Context) {
         val SERVER_PORT = intPreferencesKey("server_port")
         val BRIGHTNESS = floatPreferencesKey("brightness")
         val CLOCK_ART = stringPreferencesKey("clock_art")
+        val CLOCK_ICON_ID = stringPreferencesKey("clock_icon_id")
+        val EXCHANGE_ICON_ID = stringPreferencesKey("exchange_icon_id")
+        val CALENDAR_ICON_ID = stringPreferencesKey("calendar_icon_id")
+        val CALENDAR_DATE_PATTERN = stringPreferencesKey("calendar_date_pattern")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
@@ -46,7 +50,11 @@ class SettingsRepository(private val context: Context) {
             exchangeSource = prefs[Keys.EXCHANGE_SOURCE] ?: DEFAULT_SETTINGS.exchangeSource,
             serverPort = prefs[Keys.SERVER_PORT] ?: DEFAULT_SETTINGS.serverPort,
             brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness,
-            clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt
+            clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt,
+            clockIconId = prefs[Keys.CLOCK_ICON_ID],
+            exchangeIconId = prefs[Keys.EXCHANGE_ICON_ID],
+            calendarIconId = prefs[Keys.CALENDAR_ICON_ID],
+            calendarDatePattern = prefs[Keys.CALENDAR_DATE_PATTERN] ?: DEFAULT_SETTINGS.calendarDatePattern
         )
     }
 
@@ -61,6 +69,18 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.SERVER_PORT] = settings.serverPort
             prefs[Keys.BRIGHTNESS] = settings.brightness
             prefs[Keys.CLOCK_ART] = settings.clockArt
+            setOrRemove(prefs, Keys.CLOCK_ICON_ID, settings.clockIconId)
+            setOrRemove(prefs, Keys.EXCHANGE_ICON_ID, settings.exchangeIconId)
+            setOrRemove(prefs, Keys.CALENDAR_ICON_ID, settings.calendarIconId)
+            prefs[Keys.CALENDAR_DATE_PATTERN] = settings.calendarDatePattern
+        }
+    }
+
+    private fun <T> setOrRemove(prefs: androidx.datastore.preferences.core.MutablePreferences, key: Preferences.Key<T>, value: T?) {
+        if (value != null) {
+            prefs[key] = value
+        } else {
+            prefs -= key
         }
     }
 

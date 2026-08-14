@@ -1,6 +1,10 @@
 package com.example.relojandroid.server
 
 import android.content.Context
+import androidx.compose.ui.graphics.Color
+import com.example.relojandroid.data.IconRepository
+import com.example.relojandroid.data.LaMetricCatalogItem
+import com.example.relojandroid.data.LaMetricIcon
 import com.example.relojandroid.data.Settings
 import com.example.relojandroid.data.SettingsRepository
 import com.example.relojandroid.engine.Face
@@ -17,11 +21,13 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
-import androidx.compose.ui.graphics.Color
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -29,6 +35,7 @@ import kotlinx.serialization.json.Json
 class WebServer(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
+    private val iconRepository: IconRepository,
     private val faces: List<Face>,
     private val faceEngine: FaceEngine
 ) {
@@ -106,7 +113,125 @@ class WebServer(
                     )
                 )
             }
+
+            iconRoutes()
         }
+    }
+
+    private fun io.ktor.server.routing.Route.iconRoutes() {
+        get("/api/icons/categories") {
+            call.respond(ICON_CATEGORIES)
+        }
+
+        get("/api/icons") {
+            val category = call.request.queryParameters["category"] ?: ""
+            val search = call.request.queryParameters["search"] ?: ""
+            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 0
+            val count = call.request.queryParameters["count"]?.toIntOrNull() ?: 80
+
+            val result = iconRepository.searchIcons(category, search, page, count)
+            call.respond(
+                IconSearchResponse(
+                    icons = result.icons.map { it.toApiModel() },
+                    total = result.count_all
+                )
+            )
+        }
+
+        get("/api/icons/{id}") {
+            val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+            val icon = iconRepository.getIcon(id)
+            if (icon == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Icon not found"))
+            } else {
+                call.respond(icon.toApiModel())
+            }
+        }
+
+        get("/api/icons/{id}/thumbnail") {
+            val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+            val relativePath = call.request.queryParameters["path"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing path"))
+
+            try {
+                val bytes = iconRepository.fetchThumbnail(relativePath)
+                call.respondBytes(bytes, ContentType.Image.PNG)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        post("/api/icons/select") {
+            val request = call.receive<SelectIconRequest>()
+            val target = request.target.lowercase()
+            val iconId = request.iconId
+            if (target !in ICON_TARGETS) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid target"))
+            } else if (iconId.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing iconId"))
+            } else {
+                try {
+                    // Download and cache the icon before saving the setting so the face
+                    // can render it immediately.
+                    iconRepository.fetchAndCache(iconId)
+                    val settings = settingsRepository.settings.first()
+                    settingsRepository.updateSettings(settings.withIconId(target, iconId))
+                    call.respond(mapOf("ok" to true))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to download icon")))
+                }
+            }
+        }
+
+        delete("/api/icons/selected") {
+            val target = call.request.queryParameters["target"]?.lowercase() ?: ""
+            if (target !in ICON_TARGETS) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid target"))
+            } else {
+                val settings = settingsRepository.settings.first()
+                settingsRepository.updateSettings(settings.withIconId(target, null))
+                call.respond(mapOf("ok" to true))
+            }
+        }
+
+        get("/api/icons/selected") {
+            val target = call.request.queryParameters["target"]?.lowercase() ?: ""
+            if (target !in ICON_TARGETS) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid target"))
+            } else {
+                val settings = settingsRepository.settings.first()
+                val iconId = settings.iconIdFor(target)
+                if (iconId == null) {
+                    call.respond(SelectedIconResponse(selected = false, icon = null))
+                } else {
+                    val icon = iconRepository.getIcon(iconId)
+                    call.respond(
+                        SelectedIconResponse(
+                            selected = true,
+                            icon = icon?.toApiModel()
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun Settings.iconIdFor(target: String): String? = when (target) {
+        "clock" -> clockIconId
+        "exchange" -> exchangeIconId
+        "calendar" -> calendarIconId
+        else -> null
+    }
+
+    private fun Settings.withIconId(target: String, iconId: String?): Settings = when (target) {
+        "clock" -> copy(clockIconId = iconId)
+        "exchange" -> copy(exchangeIconId = iconId)
+        "calendar" -> copy(calendarIconId = iconId)
+        else -> this
     }
 
     private fun colorToHex(color: Color): String {
@@ -114,6 +239,24 @@ class WebServer(
         val g = (color.green * 255).toInt()
         val b = (color.blue * 255).toInt()
         return String.format("#%02X%02X%02X", r, g, b)
+    }
+
+    companion object {
+        private val ICON_TARGETS = setOf("clock", "exchange", "calendar")
+        private val ICON_CATEGORIES = listOf(
+            IconCategory("", "All"),
+            IconCategory("cartoons_movies", "Cartoons & Movies"),
+            IconCategory("characters", "Characters"),
+            IconCategory("sports", "Sports"),
+            IconCategory("flags", "Flags"),
+            IconCategory("weather", "Weather"),
+            IconCategory("transport", "Transport"),
+            IconCategory("food", "Food"),
+            IconCategory("animals", "Animals"),
+            IconCategory("notifications", "Notifications"),
+            IconCategory("games", "Games"),
+            IconCategory("misc", "Misc")
+        )
     }
 }
 
@@ -136,4 +279,53 @@ data class PreviewResponse(
     val width: Int,
     val height: Int,
     val pixels: List<String>
+)
+
+@Serializable
+data class IconCategory(
+    val id: String,
+    val name: String
+)
+
+@Serializable
+data class IconSearchResponse(
+    val icons: List<IconInfo>,
+    val total: Int
+)
+
+@Serializable
+data class IconInfo(
+    val id: String,
+    val name: String,
+    val animated: Boolean,
+    val category: String,
+    val thumbnailPath: String
+)
+
+@Serializable
+data class SelectIconRequest(
+    val target: String,
+    val iconId: String?
+)
+
+@Serializable
+data class SelectedIconResponse(
+    val selected: Boolean,
+    val icon: IconInfo?
+)
+
+private fun LaMetricCatalogItem.toApiModel(): IconInfo = IconInfo(
+    id = id.toString(),
+    name = name,
+    animated = type == 1,
+    category = category,
+    thumbnailPath = thumbnail_image
+)
+
+private fun LaMetricIcon.toApiModel(): IconInfo = IconInfo(
+    id = id,
+    name = name,
+    animated = isAnimated,
+    category = "",
+    thumbnailPath = ""
 )
