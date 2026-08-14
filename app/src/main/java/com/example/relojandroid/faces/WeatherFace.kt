@@ -33,8 +33,8 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
         val tempStr = "${weather.temperature.toInt()} C"
         val matrix = PixelMatrix.empty()
 
-        // Small weather icon on the left, temperature on the right.
-        return drawIcon(matrix, weather.weatherCode, weather.isDay, 1, 1)
+        // Single-line layout: 8x8 icon on the left, temperature on the right.
+        return drawIcon(matrix, weather.weatherCode, weather.isDay, 0, 0)
             .drawString(tempStr, 9, 2, Color(0xFFFFFF00))
     }
 
@@ -45,65 +45,169 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
         x: Int,
         y: Int
     ): PixelMatrix {
-        return when {
-            code == 0 && isDay -> drawSun(matrix, x, y)
-            code in listOf(1, 2, 3) || !isDay -> drawCloud(matrix, x, y)
-            code in listOf(51, 53, 55, 61, 63, 65, 80, 81, 82) -> drawRain(matrix, x, y)
-            code in listOf(71, 73, 75) -> drawSnow(matrix, x, y)
-            code in listOf(95, 96, 99) -> drawStorm(matrix, x, y)
-            else -> drawSun(matrix, x, y)
+        val icon = when (code) {
+            0 -> if (isDay) WeatherIcon.SUN else WeatherIcon.MOON
+            1, 2 -> if (isDay) WeatherIcon.PARTLY_CLOUDY else WeatherIcon.PARTLY_CLOUDY_NIGHT
+            3 -> WeatherIcon.CLOUD
+            45, 48 -> WeatherIcon.CLOUD
+            51, 53, 55 -> WeatherIcon.RAINDROP
+            61, 63, 65 -> WeatherIcon.RAIN_CLOUD
+            71, 73, 75 -> WeatherIcon.SNOWFLAKE
+            80, 81, 82 -> WeatherIcon.RAIN_CLOUD2
+            95, 96, 99 -> WeatherIcon.LIGHTNING
+            else -> if (isDay) WeatherIcon.SUN else WeatherIcon.MOON
         }
+        return drawWeatherIcon(matrix, x, y, icon)
     }
 
-    private fun drawSun(matrix: PixelMatrix, x: Int, y: Int): PixelMatrix {
-        val yellow = Color(0xFFFFFF00)
-        var m = matrix
-        val center = listOf(Offset(2, 2))
-        val rays = listOf(
-            Offset(2, 0), Offset(4, 2), Offset(2, 4), Offset(0, 2),
-            Offset(1, 1), Offset(3, 1), Offset(1, 3), Offset(3, 3)
-        )
-        (center + rays).forEach { m = m.set(x + it.x, y + it.y, yellow) }
-        return m
-    }
-
-    private fun drawCloud(matrix: PixelMatrix, x: Int, y: Int): PixelMatrix {
-        val gray = Color(0xFFAAAAAA)
-        var m = matrix
-        val pixels = listOf(
-            Offset(1, 2), Offset(2, 1), Offset(3, 1), Offset(4, 2),
-            Offset(4, 3), Offset(3, 3), Offset(2, 3), Offset(1, 3)
-        )
-        pixels.forEach { m = m.set(x + it.x, y + it.y, gray) }
-        return m
-    }
-
-    private fun drawRain(matrix: PixelMatrix, x: Int, y: Int): PixelMatrix {
-        val blue = Color(0xFF00AAFF)
-        var m = drawCloud(matrix, x, y)
-        listOf(Offset(1, 4), Offset(3, 4)).forEach {
-            m = m.set(x + it.x, y + it.y, blue)
-        }
-        return m
-    }
-
-    private fun drawSnow(matrix: PixelMatrix, x: Int, y: Int): PixelMatrix {
+    private fun drawWeatherIcon(
+        matrix: PixelMatrix,
+        x: Int,
+        y: Int,
+        icon: WeatherIcon
+    ): PixelMatrix {
         val white = Color(0xFFFFFFFF)
-        var m = drawCloud(matrix, x, y)
-        listOf(Offset(0, 4), Offset(2, 4), Offset(4, 4)).forEach {
-            m = m.set(x + it.x, y + it.y, white)
-        }
-        return m
-    }
-
-    private fun drawStorm(matrix: PixelMatrix, x: Int, y: Int): PixelMatrix {
         val yellow = Color(0xFFFFFF00)
-        var m = drawCloud(matrix, x, y)
-        listOf(Offset(2, 4), Offset(3, 4)).forEach {
-            m = m.set(x + it.x, y + it.y, yellow)
+        return matrix.mutate {
+            icon.pixels.forEachIndexed { row, cols ->
+                cols.forEachIndexed { col, value ->
+                    val color = when (value) {
+                        1 -> white
+                        2 -> yellow
+                        else -> null
+                    }
+                    if (color != null) {
+                        this[x + col, y + row] = color
+                    }
+                }
+            }
         }
-        return m
     }
+}
 
-    private data class Offset(val x: Int, val y: Int)
+/**
+ * 8x8 pixel weather icons.
+ * Values: 0 = transparent, 1 = white, 2 = yellow.
+ */
+private enum class WeatherIcon(val pixels: List<List<Int>>) {
+    SUN(
+        listOf(
+            listOf(2, 0, 0, 0, 0, 0, 0, 2),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 2, 2, 2, 2, 0, 0),
+            listOf(0, 1, 2, 2, 2, 2, 1, 0),
+            listOf(0, 1, 2, 2, 2, 2, 1, 0),
+            listOf(0, 0, 2, 2, 2, 2, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(2, 0, 0, 0, 0, 0, 0, 2)
+        )
+    ),
+    MOON(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0, 2, 2, 2, 0, 0),
+            listOf(0, 2, 2, 2, 0, 0, 0, 0),
+            listOf(0, 2, 2, 0, 0, 0, 0, 0),
+            listOf(0, 2, 2, 0, 0, 0, 0, 0),
+            listOf(0, 2, 2, 2, 0, 0, 0, 0),
+            listOf(0, 0, 0, 2, 2, 2, 0, 0),
+            listOf(0, 0, 0, 0, 0, 0, 0, 0)
+        )
+    ),
+    CLOUD(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 1, 1, 1, 0, 0, 0),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(0, 0, 1, 1, 1, 1, 0, 0),
+            listOf(0, 0, 0, 0, 0, 0, 0, 0)
+        )
+    ),
+    PARTLY_CLOUDY(
+        listOf(
+            listOf(0, 0, 1, 0, 0, 0, 0, 0),
+            listOf(0, 0, 1, 0, 0, 0, 0, 0),
+            listOf(0, 0, 1, 1, 1, 2, 2, 1),
+            listOf(0, 0, 1, 1, 1, 1, 2, 2),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(0, 0, 0, 1, 1, 1, 0, 0)
+        )
+    ),
+    PARTLY_CLOUDY_NIGHT(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 2, 2, 2),
+            listOf(0, 0, 0, 0, 2, 2, 2, 2),
+            listOf(0, 0, 1, 1, 2, 2, 0, 0),
+            listOf(0, 1, 1, 1, 1, 2, 2, 0),
+            listOf(1, 1, 1, 1, 1, 1, 1, 2),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(0, 1, 1, 1, 1, 1, 0, 0)
+        )
+    ),
+    RAIN_CLOUD(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 1, 1, 1, 0, 0, 0),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(0, 0, 1, 1, 1, 1, 0, 0),
+            listOf(0, 0, 1, 0, 0, 1, 0, 0)
+        )
+    ),
+    RAIN_CLOUD2(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 1, 1, 1, 0, 0, 0),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(1, 1, 1, 1, 1, 1, 1, 1),
+            listOf(0, 1, 0, 1, 0, 1, 0, 0),
+            listOf(0, 1, 0, 1, 0, 1, 0, 0)
+        )
+    ),
+    SNOWFLAKE(
+        listOf(
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 1, 0, 0, 0, 0, 1, 0),
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(1, 1, 0, 1, 1, 0, 1, 1),
+            listOf(1, 1, 0, 1, 1, 0, 1, 1),
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 1, 0, 1, 1, 0, 1, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0)
+        )
+    ),
+    LIGHTNING(
+        listOf(
+            listOf(0, 0, 0, 0, 2, 0, 0, 0),
+            listOf(0, 0, 0, 2, 2, 0, 0, 0),
+            listOf(0, 0, 1, 2, 0, 0, 0, 0),
+            listOf(0, 0, 2, 2, 2, 2, 0, 0),
+            listOf(0, 0, 2, 2, 2, 2, 0, 0),
+            listOf(0, 0, 0, 0, 2, 0, 0, 0),
+            listOf(0, 0, 0, 2, 2, 0, 0, 0),
+            listOf(0, 0, 0, 2, 0, 0, 0, 0)
+        )
+    ),
+    RAINDROP(
+        listOf(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
+            listOf(0, 0, 1, 1, 1, 1, 0, 0),
+            listOf(0, 1, 1, 1, 1, 1, 0, 0),
+            listOf(0, 1, 1, 1, 1, 1, 0, 0),
+            listOf(0, 0, 1, 1, 1, 1, 0, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0)
+        )
+    )
 }

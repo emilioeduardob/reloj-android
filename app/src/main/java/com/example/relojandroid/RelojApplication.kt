@@ -1,13 +1,17 @@
 package com.example.relojandroid
 
 import android.app.Application
+import android.util.Log
 import com.example.relojandroid.data.SettingsRepository
 import com.example.relojandroid.engine.FaceEngine
 import com.example.relojandroid.server.WebServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class RelojApplication : Application() {
@@ -29,12 +33,28 @@ class RelojApplication : Application() {
         webServer = WebServer(this, settingsRepository, faces, faceEngine)
 
         applicationScope.launch {
-            val settings = settingsRepository.settings.first()
-            webServer.start(settings.serverPort)
+            try {
+                faceEngine.run()
+            } catch (e: Exception) {
+                Log.e(TAG, "Face engine crashed", e)
+            }
         }
 
-        applicationScope.launch {
-            faceEngine.run()
-        }
+        // Restart the web server whenever the configured port changes.
+        settingsRepository.settings
+            .map { it.serverPort }
+            .distinctUntilChanged()
+            .onEach { port ->
+                try {
+                    webServer.start(port)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to start web server on port $port", e)
+                }
+            }
+            .launchIn(applicationScope)
+    }
+
+    companion object {
+        private const val TAG = "RelojApplication"
     }
 }
