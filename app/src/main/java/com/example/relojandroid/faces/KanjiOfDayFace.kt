@@ -15,8 +15,12 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
     override val id = "kanji"
     override val name = "Kanji of the Day"
 
-    private val artSize = 8
-    private val mainDisplayWidth = PixelMatrix.WIDTH - artSize
+    // Double the base density so the kanji has enough pixels to be legible.
+    private val matrixWidth = PixelMatrix.WIDTH * 2
+    private val matrixHeight = PixelMatrix.HEIGHT * 2
+    private val kanjiSize = 16
+    private val textAreaWidth = matrixWidth - kanjiSize
+    private val textRowHeight = matrixHeight / 2
 
     private var cachedListId: String? = null
     private var cachedKanjiList: List<String>? = null
@@ -58,24 +62,34 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
         }
 
         val reading = buildReading(details)
+        val meaning = buildMeaning(details)
         val scrollOffset = (System.currentTimeMillis() / 200).toInt()
 
-        return PixelMatrix.empty()
+        return PixelMatrix.empty(width = matrixWidth, height = matrixHeight)
             .drawSampledText(
                 text = details.kanji,
                 x = 0,
                 y = 0,
-                width = artSize,
-                height = PixelMatrix.HEIGHT,
+                width = kanjiSize,
+                height = matrixHeight,
                 color = Color(0xFFFF5555)
             )
             .drawSampledTextScroll(
                 text = reading,
-                x = artSize,
-                y = 1,
-                width = mainDisplayWidth,
-                height = PixelMatrix.HEIGHT - 1,
+                x = kanjiSize,
+                y = 0,
+                width = textAreaWidth,
+                height = textRowHeight,
                 color = Color(0xFFFFFFFF),
+                scrollOffset = scrollOffset
+            )
+            .drawSampledTextScroll(
+                text = meaning,
+                x = 0,
+                y = textRowHeight,
+                width = matrixWidth,
+                height = textRowHeight,
+                color = Color(0xFFFFFF00),
                 scrollOffset = scrollOffset
             )
     }
@@ -92,13 +106,17 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
         return details.meanings.firstOrNull() ?: "?"
     }
 
+    private fun buildMeaning(details: KanjiDetails): String {
+        return details.meanings.joinToString("  ").ifBlank { "?" }
+    }
+
     private fun String.trimHyphenNotation(): String {
         return this.removePrefix("-").removeSuffix("-").trim()
     }
 
     private fun renderError(label: String): PixelMatrix {
-        return PixelMatrix.empty()
-            .drawSampledText("漢", 0, 0, artSize, PixelMatrix.HEIGHT, Color(0xFFFF0000))
-            .drawSampledText(label, artSize, 1, mainDisplayWidth, PixelMatrix.HEIGHT - 1, Color(0xFFFF0000))
+        return PixelMatrix.empty(width = matrixWidth, height = matrixHeight)
+            .drawSampledText("漢", 0, 0, kanjiSize, matrixHeight, Color(0xFFFF0000))
+            .drawSampledText(label, kanjiSize, 0, textAreaWidth, textRowHeight, Color(0xFFFF0000))
     }
 }
