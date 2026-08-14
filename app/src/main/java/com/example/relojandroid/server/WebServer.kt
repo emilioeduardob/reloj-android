@@ -60,6 +60,9 @@ class WebServer(
             json(Json { ignoreUnknownKeys = true; isLenient = true })
         }
         install(StatusPages) {
+            exception<CancellationException> { _, cause ->
+                throw cause
+            }
             exception<Throwable> { call, cause ->
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (cause.message ?: "Unknown error")))
             }
@@ -264,7 +267,7 @@ class WebServer(
         return try {
             DateTimeFormatter.ofPattern(trimmed, Locale.getDefault())
             trimmed
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
             "dd/MM"
         }
     }

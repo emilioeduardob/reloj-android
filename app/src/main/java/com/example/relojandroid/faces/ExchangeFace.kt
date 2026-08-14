@@ -21,6 +21,7 @@ class ExchangeFace(
     override val id = "exchange"
     override val name = "Dólar PYG"
 
+    private var cachedSource: String? = null
     private var cachedResult: com.example.relojandroid.data.ExchangeResult? = null
     private var lastFetch: Long = 0
     private val cacheTtlMs = 5 * 60 * 1000L // 5 minutes
@@ -33,8 +34,9 @@ class ExchangeFace(
     override suspend fun render(settings: Settings): PixelMatrix {
         val now = System.currentTimeMillis()
         val exchange = try {
-            if (cachedResult == null || now - lastFetch > cacheTtlMs) {
+            if (cachedResult == null || cachedSource != settings.exchangeSource || now - lastFetch > cacheTtlMs) {
                 cachedResult = api.fetchUsdPyg(settings.exchangeSource)
+                cachedSource = settings.exchangeSource
                 lastFetch = now
             }
             cachedResult!!

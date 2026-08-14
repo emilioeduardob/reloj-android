@@ -2,6 +2,7 @@ package com.example.relojandroid.engine
 
 import androidx.compose.ui.graphics.Color
 import com.example.relojandroid.data.Settings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,8 +52,10 @@ class FaceEngine(
                 while (System.currentTimeMillis() - faceStart < durationMs) {
                     _matrix.value = try {
                         face.render(settings)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
-                        renderError(e.message ?: "ERR")
+                        renderError()
                     }
                     delay(refreshMs)
                 }
@@ -65,7 +68,7 @@ class FaceEngine(
             .drawString("NO FACES", 2, 1, Color(0xFFFF0000))
     }
 
-    private fun renderError(message: String): PixelMatrix {
+    private fun renderError(): PixelMatrix {
         return PixelMatrix.empty()
             .drawString("ERR", 2, 1, Color(0xFFFF0000))
     }
