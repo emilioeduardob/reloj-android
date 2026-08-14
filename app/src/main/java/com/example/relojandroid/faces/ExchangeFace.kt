@@ -12,6 +12,7 @@ import com.example.relojandroid.engine.drawIcon
 import com.example.relojandroid.engine.drawString
 import com.example.relojandroid.engine.frameAt
 import com.example.relojandroid.engine.measureBigString
+import kotlinx.coroutines.CancellationException
 
 class ExchangeFace(
     private val api: ExchangeApi = ExchangeApi(),
@@ -37,6 +38,8 @@ class ExchangeFace(
                 lastFetch = now
             }
             cachedResult!!
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return PixelMatrix.empty()
                 .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
