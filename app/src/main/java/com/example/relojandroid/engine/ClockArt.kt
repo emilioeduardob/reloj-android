@@ -80,17 +80,27 @@ fun PixelMatrix.drawClockArt(art: ClockArt, offsetX: Int, offsetY: Int): PixelMa
 
 /**
  * Draw an 8x8 calendar pixel-art showing the given day of month.
- * Top two rows are red; the day number is drawn in white below.
+ * Top two rows are red; the body is white with the day number in black.
  */
 fun PixelMatrix.drawCalendar(dayOfMonth: Int, offsetX: Int, offsetY: Int): PixelMatrix {
     val red = Color(0xFFFF3333)
+    val white = Color(0xFFFFFFFF)
+    val black = Color(0xFF000000)
     val dayStr = dayOfMonth.coerceIn(1, 31).toString()
 
-    var result = this
-    // Red header rows.
-    for (x in 0 until 8) {
-        result = result.set(offsetX + x, offsetY, red)
-        result = result.set(offsetX + x, offsetY + 1, red)
+    var result = this.mutate {
+        // Red header rows.
+        for (x in 0 until 8) {
+            this[offsetX + x, offsetY] = red
+            this[offsetX + x, offsetY + 1] = red
+        }
+
+        // White calendar page background.
+        for (y in 2 until 8) {
+            for (x in 0 until 8) {
+                this[offsetX + x, offsetY + y] = white
+            }
+        }
     }
 
     // Day number in small 3x5 font, centered vertically in rows 2-7.
@@ -100,5 +110,5 @@ fun PixelMatrix.drawCalendar(dayOfMonth: Int, offsetX: Int, offsetY: Int): Pixel
     } else {
         offsetX
     }
-    return result.drawString(dayStr, textX, textY, Color(0xFFFFFFFF))
+    return result.drawString(dayStr, textX, textY, black)
 }
