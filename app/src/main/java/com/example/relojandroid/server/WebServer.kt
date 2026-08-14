@@ -27,6 +27,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -139,11 +140,7 @@ class WebServer(
 
         get("/api/icons/{id}") {
             val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-            val icon = try {
-                iconRepository.getIcon(id)
-            } catch (e: Exception) {
-                null
-            }
+            val icon = iconRepository.getIcon(id)
             if (icon == null) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Icon not found"))
             } else {
@@ -159,6 +156,8 @@ class WebServer(
             try {
                 val bytes = iconRepository.fetchThumbnail(relativePath)
                 call.respondBytes(bytes, ContentType.Image.PNG)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }
@@ -177,6 +176,8 @@ class WebServer(
                     val settings = settingsRepository.settings.first()
                     settingsRepository.updateSettings(settings.copy(clockIconId = iconId))
                     call.respond(mapOf("ok" to true))
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadGateway, mapOf("error" to (e.message ?: "Failed to download icon")))
                 }
@@ -195,11 +196,7 @@ class WebServer(
             if (iconId == null) {
                 call.respond(SelectedIconResponse(selected = false, icon = null))
             } else {
-                val icon = try {
-                    iconRepository.getIcon(iconId)
-                } catch (e: Exception) {
-                    null
-                }
+                val icon = iconRepository.getIcon(iconId)
                 call.respond(
                     SelectedIconResponse(
                         selected = true,

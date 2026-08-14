@@ -2,6 +2,7 @@ package com.example.relojandroid.data
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
@@ -31,6 +32,8 @@ class IconRepository(
                 val parsed = json.decodeFromString<LaMetricIconDataResponse>(raw).toLaMetricIcon()
                 memoryCache[iconId] = parsed
                 return parsed
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to parse cached icon $iconId", e)
                 file.delete()
@@ -39,6 +42,8 @@ class IconRepository(
 
         return try {
             fetchAndCache(iconId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "Failed to fetch icon $iconId", e)
             null

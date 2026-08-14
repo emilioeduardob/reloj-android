@@ -44,29 +44,3 @@ fun LaMetricIcon.frameAt(elapsedTimeMs: Long): PixelMatrix {
     }
     return frames[frameIndex]
 }
-
-/**
- * How long until the currently displayed frame should change, in milliseconds.
- * Returns [LaMetricIcon.DEFAULT_FRAME_DELAY_MS] for static icons.
- */
-fun LaMetricIcon.millisUntilNextFrame(elapsedTimeMs: Long): Long {
-    if (!isAnimated || frames.size == 1) {
-        return LaMetricIcon.DEFAULT_FRAME_DELAY_MS.toLong()
-    }
-
-    val totalDuration = frames.indices.sumOf { index ->
-        delays.getOrNull(index)?.toLong() ?: LaMetricIcon.DEFAULT_FRAME_DELAY_MS.toLong()
-    }.coerceAtLeast(1L)
-
-    var remaining = elapsedTimeMs % totalDuration
-    var frameIndex = 0
-    while (frameIndex < frames.size - 1) {
-        val delay = delays.getOrNull(frameIndex) ?: LaMetricIcon.DEFAULT_FRAME_DELAY_MS
-        if (remaining < delay) {
-            return (delay - remaining).coerceAtLeast(1L)
-        }
-        remaining -= delay
-        frameIndex++
-    }
-    return (totalDuration - remaining).coerceAtLeast(1L)
-}
