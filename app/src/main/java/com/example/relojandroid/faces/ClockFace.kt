@@ -6,21 +6,21 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.drawChar
 import com.example.relojandroid.engine.drawString
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class ClockFace : Face {
     override val id = "clock"
     override val name = "Clock"
 
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    private val dateFormat = SimpleDateFormat("EEE d MMM", Locale.getDefault())
+    private val timeFormat = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+    private val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
 
     override suspend fun render(settings: Settings): PixelMatrix {
-        val now = Calendar.getInstance()
-        val timeStr = timeFormat.format(now.time)
-        val dateStr = dateFormat.format(now.time).uppercase(Locale.getDefault())
+        val now = LocalDateTime.now()
+        val timeStr = timeFormat.format(now)
+        val dateStr = dateFormat.format(now).uppercase(Locale.getDefault())
 
         val timeWidth = timeStr.length * 4 - 1
         val dateWidth = dateStr.length * 4 - 1
@@ -32,11 +32,8 @@ class ClockFace : Face {
             .drawString(timeStr, (PixelMatrix.WIDTH - timeWidth) / 2, 6, color)
             .drawString(dateStr, (PixelMatrix.WIDTH - dateWidth) / 2, 20, dimColor)
 
-        // Blinking colon effect: draw colon manually at full brightness every second.
-        val showColon = now.get(Calendar.SECOND) % 2 == 0
-        if (!showColon) {
-            // Replace the colon position with a dimmer colon by drawing over it.
-            // Colon is the 3rd character (index 2) of "HH:mm".
+        // Blinking colon effect: dim the colon every other second.
+        if (now.second % 2 != 0) {
             val colonX = (PixelMatrix.WIDTH - timeWidth) / 2 + 2 * 4
             matrix = matrix.drawChar(':', colonX, 6, dimColor)
         }

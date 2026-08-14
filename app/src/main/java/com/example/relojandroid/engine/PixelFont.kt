@@ -74,15 +74,15 @@ fun PixelMatrix.drawChar(
     color: Color
 ): PixelMatrix {
     val glyph = glyphFor(char)
-    var result = this
-    glyph.forEachIndexed { row, line ->
-        line.forEachIndexed { col, bit ->
-            if (bit == '1') {
-                result = result.set(x + col, y + row, color)
+    return mutate {
+        glyph.forEachIndexed { row, line ->
+            line.forEachIndexed { col, bit ->
+                if (bit == '1') {
+                    this[x + col, y + row] = color
+                }
             }
         }
     }
-    return result
 }
 
 /**
