@@ -13,5 +13,6 @@ data class Settings(
     val exchangeSource: String = "bcp",
     val serverPort: Int = 8080,
     val brightness: Float = 1.0f,
-    val clockArt: String = ClockArt.ABSTRACT.name
+    val clockArt: String = ClockArt.ABSTRACT.name,
+    val clockIconId: String? = null
 )
