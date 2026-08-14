@@ -12,12 +12,12 @@ private val paleYellow = Color(0xFFFFFFB0)
 
 private val coinPattern: List<String> = listOf(
     "........",
-    "..LLPP..",
-    ".LGGGGW.",
-    ".LGDDGW.",
-    ".LGGDGW.",
-    ".LLGDGW.",
-    "..DDLL..",
+    "..LLLL..",
+    ".LGGGGL.",
+    ".LGDDGL.",
+    ".LGDDGL.",
+    ".LGGGGL.",
+    "..LLLL..",
     "........"
 )
 

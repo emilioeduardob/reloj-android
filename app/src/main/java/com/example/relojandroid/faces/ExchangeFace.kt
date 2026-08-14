@@ -39,7 +39,7 @@ class ExchangeFace(private val api: ExchangeApi = ExchangeApi()) : Face {
         // LaMetric layout: 8x8 coin icon on the left, big white rate on the right.
         return PixelMatrix.empty()
             .drawCoinIcon(offsetX = 0, offsetY = 0)
-            .drawBigString(line, 8, 1, Color(0xFFFFFFFF))
+            .drawBigString(line, 9, 1, Color(0xFFFFFFFF))
     }
 
     private fun formatRate(rate: Double): String {
