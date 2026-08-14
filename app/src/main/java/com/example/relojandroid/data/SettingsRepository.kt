@@ -35,8 +35,11 @@ class SettingsRepository(private val context: Context) {
         val BRIGHTNESS = floatPreferencesKey("brightness")
         val CLOCK_ART = stringPreferencesKey("clock_art")
         val CLOCK_ICON_ID = stringPreferencesKey("clock_icon_id")
+        val CLOCK_ICON_THUMBNAIL_PATH = stringPreferencesKey("clock_icon_thumbnail_path")
         val EXCHANGE_ICON_ID = stringPreferencesKey("exchange_icon_id")
+        val EXCHANGE_ICON_THUMBNAIL_PATH = stringPreferencesKey("exchange_icon_thumbnail_path")
         val CALENDAR_ICON_ID = stringPreferencesKey("calendar_icon_id")
+        val CALENDAR_ICON_THUMBNAIL_PATH = stringPreferencesKey("calendar_icon_thumbnail_path")
         val CALENDAR_DATE_PATTERN = stringPreferencesKey("calendar_date_pattern")
     }
 
@@ -52,8 +55,11 @@ class SettingsRepository(private val context: Context) {
             brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness,
             clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt,
             clockIconId = prefs[Keys.CLOCK_ICON_ID],
+            clockIconThumbnailPath = prefs[Keys.CLOCK_ICON_THUMBNAIL_PATH],
             exchangeIconId = prefs[Keys.EXCHANGE_ICON_ID],
+            exchangeIconThumbnailPath = prefs[Keys.EXCHANGE_ICON_THUMBNAIL_PATH],
             calendarIconId = prefs[Keys.CALENDAR_ICON_ID],
+            calendarIconThumbnailPath = prefs[Keys.CALENDAR_ICON_THUMBNAIL_PATH],
             calendarDatePattern = prefs[Keys.CALENDAR_DATE_PATTERN] ?: DEFAULT_SETTINGS.calendarDatePattern
         )
     }
@@ -70,9 +76,12 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.BRIGHTNESS] = settings.brightness
             prefs[Keys.CLOCK_ART] = settings.clockArt
             setOrRemove(prefs, Keys.CLOCK_ICON_ID, settings.clockIconId)
+            setOrRemove(prefs, Keys.CLOCK_ICON_THUMBNAIL_PATH, settings.clockIconThumbnailPath)
             setOrRemove(prefs, Keys.EXCHANGE_ICON_ID, settings.exchangeIconId)
+            setOrRemove(prefs, Keys.EXCHANGE_ICON_THUMBNAIL_PATH, settings.exchangeIconThumbnailPath)
             setOrRemove(prefs, Keys.CALENDAR_ICON_ID, settings.calendarIconId)
-            prefs[Keys.CALENDAR_DATE_PATTERN] = settings.calendarDatePattern
+            setOrRemove(prefs, Keys.CALENDAR_ICON_THUMBNAIL_PATH, settings.calendarIconThumbnailPath)
+            prefs[Keys.CALENDAR_DATE_PATTERN] = settings.calendarDatePattern.trim().takeIf { it.isNotBlank() } ?: DEFAULT_SETTINGS.calendarDatePattern
         }
     }
 

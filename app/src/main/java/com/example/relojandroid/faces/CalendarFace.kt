@@ -67,10 +67,18 @@ class CalendarFace(
         if (cachedPattern == pattern && cachedFormatter != null) {
             return cachedFormatter!!
         }
-        val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
-        cachedPattern = pattern
-        cachedFormatter = formatter
-        return formatter
+        return try {
+            val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
+            cachedPattern = pattern
+            cachedFormatter = formatter
+            formatter
+        } catch (e: IllegalArgumentException) {
+            // Invalid pattern; fall back to a safe default and cache it.
+            val fallback = DateTimeFormatter.ofPattern("dd/MM", Locale.getDefault())
+            cachedPattern = "dd/MM"
+            cachedFormatter = fallback
+            fallback
+        }
     }
 
     private suspend fun loadIcon(iconId: String): LaMetricIcon? {

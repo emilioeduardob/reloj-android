@@ -15,7 +15,10 @@ data class Settings(
     val brightness: Float = 1.0f,
     val clockArt: String = ClockArt.ABSTRACT.name,
     val clockIconId: String? = null,
+    val clockIconThumbnailPath: String? = null,
     val exchangeIconId: String? = null,
+    val exchangeIconThumbnailPath: String? = null,
     val calendarIconId: String? = null,
+    val calendarIconThumbnailPath: String? = null,
     val calendarDatePattern: String = "dd/MM"
 )

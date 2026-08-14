@@ -62,12 +62,11 @@ class FaceEngine(
 
     private fun renderNoFaces(): PixelMatrix {
         return PixelMatrix.empty()
-            .drawString("NO FACES", 2, 12, Color(0xFFFF0000))
+            .drawString("NO FACES", 2, 1, Color(0xFFFF0000))
     }
 
     private fun renderError(message: String): PixelMatrix {
         return PixelMatrix.empty()
-            .drawString("ERR", 2, 2, Color(0xFFFF0000))
-            .drawString(message.take(15), 2, 10, Color(0xFFFF5500))
+            .drawString("ERR", 2, 1, Color(0xFFFF0000))
     }
 }

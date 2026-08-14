@@ -31,6 +31,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class WebServer(
     private val context: Context,
@@ -76,7 +78,8 @@ class WebServer(
 
             post("/api/settings") {
                 val request = call.receive<Settings>()
-                settingsRepository.updateSettings(request)
+                val validatedPattern = validateDatePattern(request.calendarDatePattern)
+                settingsRepository.updateSettings(request.copy(calendarDatePattern = validatedPattern))
                 call.respond(mapOf("ok" to true))
             }
 
@@ -165,9 +168,9 @@ class WebServer(
 
         post("/api/icons/select") {
             val request = call.receive<SelectIconRequest>()
-            val target = request.target.lowercase()
+            val target = request.target?.lowercase()
             val iconId = request.iconId
-            if (target !in ICON_TARGETS) {
+            if (target.isNullOrBlank() || target !in ICON_TARGETS) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid target"))
             } else if (iconId.isNullOrBlank()) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing iconId"))
@@ -177,7 +180,9 @@ class WebServer(
                     // can render it immediately.
                     iconRepository.fetchAndCache(iconId)
                     val settings = settingsRepository.settings.first()
-                    settingsRepository.updateSettings(settings.withIconId(target, iconId))
+                    settingsRepository.updateSettings(
+                        settings.withIcon(target, iconId, request.thumbnailPath)
+                    )
                     call.respond(mapOf("ok" to true))
                 } catch (e: CancellationException) {
                     throw e
@@ -193,7 +198,7 @@ class WebServer(
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid target"))
             } else {
                 val settings = settingsRepository.settings.first()
-                settingsRepository.updateSettings(settings.withIconId(target, null))
+                settingsRepository.updateSettings(settings.withIcon(target, null, null))
                 call.respond(mapOf("ok" to true))
             }
         }
@@ -209,12 +214,17 @@ class WebServer(
                     call.respond(SelectedIconResponse(selected = false, icon = null))
                 } else {
                     val icon = iconRepository.getIcon(iconId)
-                    call.respond(
-                        SelectedIconResponse(
-                            selected = true,
-                            icon = icon?.toApiModel()
+                    if (icon == null) {
+                        call.respond(SelectedIconResponse(selected = false, icon = null))
+                    } else {
+                        val thumbnailPath = settings.iconThumbnailPathFor(target)
+                        call.respond(
+                            SelectedIconResponse(
+                                selected = true,
+                                icon = icon.toApiModel(thumbnailPath ?: "")
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -227,10 +237,17 @@ class WebServer(
         else -> null
     }
 
-    private fun Settings.withIconId(target: String, iconId: String?): Settings = when (target) {
-        "clock" -> copy(clockIconId = iconId)
-        "exchange" -> copy(exchangeIconId = iconId)
-        "calendar" -> copy(calendarIconId = iconId)
+    private fun Settings.iconThumbnailPathFor(target: String): String? = when (target) {
+        "clock" -> clockIconThumbnailPath
+        "exchange" -> exchangeIconThumbnailPath
+        "calendar" -> calendarIconThumbnailPath
+        else -> null
+    }
+
+    private fun Settings.withIcon(target: String, iconId: String?, thumbnailPath: String?): Settings = when (target) {
+        "clock" -> copy(clockIconId = iconId, clockIconThumbnailPath = thumbnailPath)
+        "exchange" -> copy(exchangeIconId = iconId, exchangeIconThumbnailPath = thumbnailPath)
+        "calendar" -> copy(calendarIconId = iconId, calendarIconThumbnailPath = thumbnailPath)
         else -> this
     }
 
@@ -239,6 +256,17 @@ class WebServer(
         val g = (color.green * 255).toInt()
         val b = (color.blue * 255).toInt()
         return String.format("#%02X%02X%02X", r, g, b)
+    }
+
+    private fun validateDatePattern(pattern: String): String {
+        val trimmed = pattern.trim()
+        if (trimmed.isBlank()) return "dd/MM"
+        return try {
+            DateTimeFormatter.ofPattern(trimmed, Locale.getDefault())
+            trimmed
+        } catch (e: Exception) {
+            "dd/MM"
+        }
     }
 
     companion object {
@@ -304,8 +332,9 @@ data class IconInfo(
 
 @Serializable
 data class SelectIconRequest(
-    val target: String,
-    val iconId: String?
+    val target: String?,
+    val iconId: String?,
+    val thumbnailPath: String? = null
 )
 
 @Serializable
@@ -322,10 +351,10 @@ private fun LaMetricCatalogItem.toApiModel(): IconInfo = IconInfo(
     thumbnailPath = thumbnail_image
 )
 
-private fun LaMetricIcon.toApiModel(): IconInfo = IconInfo(
+private fun LaMetricIcon.toApiModel(thumbnailPath: String = ""): IconInfo = IconInfo(
     id = id,
     name = name,
     animated = isAnimated,
     category = "",
-    thumbnailPath = ""
+    thumbnailPath = thumbnailPath
 )

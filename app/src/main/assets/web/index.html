@@ -213,6 +213,10 @@
             return target + 'IconId';
         }
 
+        function iconThumbnailField(target) {
+            return target + 'IconThumbnailPath';
+        }
+
         function currentIconId() {
             return currentSettings ? currentSettings[iconIdField(iconTarget)] : null;
         }
@@ -350,7 +354,7 @@
             const res = await fetch(`${API}/icons/select`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target: iconTarget, iconId: icon.id })
+                body: JSON.stringify({ target: iconTarget, iconId: icon.id, thumbnailPath: icon.thumbnailPath })
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -358,13 +362,20 @@
                 return;
             }
             currentSettings[iconIdField(iconTarget)] = icon.id;
+            currentSettings[iconThumbnailField(iconTarget)] = icon.thumbnailPath;
             renderSelectedIcon({ selected: true, icon });
             renderIconGridSelection();
         }
 
         async function clearIcon() {
-            await fetch(`${API}/icons/selected?target=${iconTarget}`, { method: 'DELETE' });
+            const res = await fetch(`${API}/icons/selected?target=${iconTarget}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Failed to clear icon');
+                return;
+            }
             currentSettings[iconIdField(iconTarget)] = null;
+            currentSettings[iconThumbnailField(iconTarget)] = null;
             renderSelectedIcon({ selected: false, icon: null });
             renderIconGridSelection();
         }
@@ -414,7 +425,7 @@
             settings.weatherLat = parseFloat(document.getElementById('lat').value);
             settings.weatherLon = parseFloat(document.getElementById('lon').value);
             settings.clockArt = document.getElementById('clockArt').value;
-            settings.calendarDatePattern = document.getElementById('calendarPattern').value || 'dd/MM';
+            settings.calendarDatePattern = document.getElementById('calendarPattern').value.trim() || 'dd/MM';
 
             await fetch(`${API}/settings`, {
                 method: 'POST',
