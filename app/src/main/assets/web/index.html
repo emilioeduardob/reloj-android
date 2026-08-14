@@ -239,6 +239,12 @@
             document.getElementById('calendarPattern').value = settings.calendarDatePattern || 'dd/MM';
             document.getElementById('iconTarget').value = iconTarget;
 
+            renderFaces(faces);
+            renderSelectedIcon(selected);
+            renderIconGridSelection();
+        }
+
+        function renderFaces(faces) {
             const facesEl = document.getElementById('faces');
             facesEl.innerHTML = '';
             faces.forEach(face => {
@@ -251,9 +257,20 @@
                     </label>`;
                 facesEl.appendChild(row);
             });
+        }
 
-            renderSelectedIcon(selected);
-            renderIconGridSelection();
+        async function refreshLive() {
+            try {
+                const [settings, status, selected] = await Promise.all([
+                    fetch(`${API}/settings`).then(r => r.json()),
+                    fetch(`${API}/status`).then(r => r.json()),
+                    fetch(`${API}/icons/selected?target=${iconTarget}`).then(r => r.json())
+                ]);
+                currentSettings = settings;
+                document.getElementById('currentFace').textContent = status.currentFaceName || status.currentFaceId || '-';
+                renderSelectedIcon(selected);
+                renderIconGridSelection();
+            } catch (e) { /* ignore */ }
         }
 
         async function loadCategories() {
@@ -448,7 +465,7 @@
         loadCategories();
         load();
         setInterval(updatePreview, 500);
-        setInterval(load, 5000);
+        setInterval(refreshLive, 5000);
     </script>
 </body>
 </html>
