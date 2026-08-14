@@ -9,7 +9,8 @@ enum class ClockArt(val displayName: String) {
     ABSTRACT("Abstract"),
     FLOWER("Flower"),
     HEART("Heart"),
-    WEATHER("Weather");
+    WEATHER("Weather"),
+    CALENDAR("Calendar");
 
     companion object {
         fun fromId(id: String): ClockArt = entries.find { it.name.equals(id, ignoreCase = true) } ?: ABSTRACT
@@ -75,4 +76,29 @@ fun PixelMatrix.drawClockArt(art: ClockArt, offsetX: Int, offsetY: Int): PixelMa
         result = result.set(offsetX + pixel.x, offsetY + pixel.y, pixel.color)
     }
     return result
+}
+
+/**
+ * Draw an 8x8 calendar pixel-art showing the given day of month.
+ * Top two rows are red; the day number is drawn in white below.
+ */
+fun PixelMatrix.drawCalendar(dayOfMonth: Int, offsetX: Int, offsetY: Int): PixelMatrix {
+    val red = Color(0xFFFF3333)
+    val dayStr = dayOfMonth.coerceIn(1, 31).toString()
+
+    var result = this
+    // Red header rows.
+    for (x in 0 until 8) {
+        result = result.set(offsetX + x, offsetY, red)
+        result = result.set(offsetX + x, offsetY + 1, red)
+    }
+
+    // Day number in small 3x5 font, centered vertically in rows 2-7.
+    val textY = offsetY + 2
+    val textX = if (dayStr.length == 1) {
+        offsetX + (8 - 3) / 2
+    } else {
+        offsetX
+    }
+    return result.drawString(dayStr, textX, textY, Color(0xFFFFFFFF))
 }

@@ -7,6 +7,7 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.drawBigChar
 import com.example.relojandroid.engine.drawBigString
+import com.example.relojandroid.engine.drawCalendar
 import com.example.relojandroid.engine.drawClockArt
 import com.example.relojandroid.engine.measureBigString
 import java.time.LocalDateTime
@@ -34,8 +35,12 @@ class ClockFace : Face {
         val timeY = (PixelMatrix.HEIGHT - 7) / 2
 
         var matrix = PixelMatrix.empty()
-            .drawClockArt(art, offsetX = 0, offsetY = 0)
-            .drawBigString(timeStr, timeX, timeY, Color(0xFFFFFFFF))
+        matrix = if (art == ClockArt.CALENDAR) {
+            matrix.drawCalendar(now.dayOfMonth, offsetX = 0, offsetY = 0)
+        } else {
+            matrix.drawClockArt(art, offsetX = 0, offsetY = 0)
+        }
+        matrix = matrix.drawBigString(timeStr, timeX, timeY, Color(0xFFFFFFFF))
 
         // Blinking colon: dim it every other second.
         val showColon = now.second % 2 == 0
