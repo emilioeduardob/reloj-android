@@ -85,9 +85,9 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
             )
             .drawSampledTextScroll(
                 text = meaning,
-                x = 0,
+                x = kanjiSize,
                 y = textRowHeight,
-                width = matrixWidth,
+                width = textAreaWidth,
                 height = textRowHeight,
                 color = Color(0xFFFFFF00),
                 scrollOffset = scrollOffset
