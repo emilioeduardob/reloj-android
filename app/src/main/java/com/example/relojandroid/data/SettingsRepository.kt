@@ -41,6 +41,7 @@ class SettingsRepository(private val context: Context) {
         val CALENDAR_ICON_ID = stringPreferencesKey("calendar_icon_id")
         val CALENDAR_ICON_THUMBNAIL_PATH = stringPreferencesKey("calendar_icon_thumbnail_path")
         val CALENDAR_DATE_PATTERN = stringPreferencesKey("calendar_date_pattern")
+        val KANJI_LIST = stringPreferencesKey("kanji_list")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
@@ -60,7 +61,8 @@ class SettingsRepository(private val context: Context) {
             exchangeIconThumbnailPath = prefs[Keys.EXCHANGE_ICON_THUMBNAIL_PATH],
             calendarIconId = prefs[Keys.CALENDAR_ICON_ID],
             calendarIconThumbnailPath = prefs[Keys.CALENDAR_ICON_THUMBNAIL_PATH],
-            calendarDatePattern = prefs[Keys.CALENDAR_DATE_PATTERN] ?: DEFAULT_SETTINGS.calendarDatePattern
+            calendarDatePattern = prefs[Keys.CALENDAR_DATE_PATTERN] ?: DEFAULT_SETTINGS.calendarDatePattern,
+            kanjiList = prefs[Keys.KANJI_LIST] ?: DEFAULT_SETTINGS.kanjiList
         )
     }
 
@@ -82,6 +84,7 @@ class SettingsRepository(private val context: Context) {
             setOrRemove(prefs, Keys.CALENDAR_ICON_ID, settings.calendarIconId)
             setOrRemove(prefs, Keys.CALENDAR_ICON_THUMBNAIL_PATH, settings.calendarIconThumbnailPath)
             prefs[Keys.CALENDAR_DATE_PATTERN] = settings.calendarDatePattern.trim().takeIf { it.isNotBlank() } ?: DEFAULT_SETTINGS.calendarDatePattern
+            prefs[Keys.KANJI_LIST] = settings.kanjiList
         }
     }
 

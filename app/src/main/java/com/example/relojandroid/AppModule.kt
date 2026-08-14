@@ -6,6 +6,7 @@ import com.example.relojandroid.data.LaMetricIconApi
 import com.example.relojandroid.faces.CalendarFace
 import com.example.relojandroid.faces.ClockFace
 import com.example.relojandroid.faces.ExchangeFace
+import com.example.relojandroid.faces.KanjiOfDayFace
 import com.example.relojandroid.faces.WeatherFace
 import com.example.relojandroid.engine.Face
 
@@ -19,6 +20,7 @@ object AppModule {
         ClockFace(iconRepository),
         WeatherFace(),
         ExchangeFace(iconRepository = iconRepository),
-        CalendarFace(iconRepository)
+        CalendarFace(iconRepository),
+        KanjiOfDayFace()
     )
 }

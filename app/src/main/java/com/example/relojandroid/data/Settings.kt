@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Settings(
-    val enabledFaces: List<String> = listOf("clock", "weather", "exchange", "calendar"),
+    val enabledFaces: List<String> = listOf("clock", "weather", "exchange", "calendar", "kanji"),
     val rotationSeconds: Int = 10,
     val weatherCity: String = "Asunción",
     val weatherLat: Double = -25.2867,
@@ -20,5 +20,6 @@ data class Settings(
     val exchangeIconThumbnailPath: String? = null,
     val calendarIconId: String? = null,
     val calendarIconThumbnailPath: String? = null,
-    val calendarDatePattern: String = "dd/MM"
+    val calendarDatePattern: String = "dd/MM",
+    val kanjiList: String = "joyo"
 )

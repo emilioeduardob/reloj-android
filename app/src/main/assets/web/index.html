@@ -195,6 +195,22 @@
         <label for="calendarPattern">Calendar date pattern</label>
         <input id="calendarPattern" type="text" placeholder="dd/MM">
 
+        <label for="kanjiList">Kanji list</label>
+        <select id="kanjiList">
+            <option value="joyo">Joyo (all)</option>
+            <option value="grade-1">Grade 1</option>
+            <option value="grade-2">Grade 2</option>
+            <option value="grade-3">Grade 3</option>
+            <option value="grade-4">Grade 4</option>
+            <option value="grade-5">Grade 5</option>
+            <option value="grade-6">Grade 6</option>
+            <option value="jlpt-5">JLPT N5</option>
+            <option value="jlpt-4">JLPT N4</option>
+            <option value="jlpt-3">JLPT N3</option>
+            <option value="jlpt-2">JLPT N2</option>
+            <option value="jlpt-1">JLPT N1</option>
+        </select>
+
         <br><br>
         <button id="save">Save Settings</button>
     </div>
@@ -243,6 +259,7 @@
             document.getElementById('clockArt').value = settings.clockArt || 'ABSTRACT';
             document.getElementById('calendarPattern').value = settings.calendarDatePattern || 'dd/MM';
             document.getElementById('iconTarget').value = iconTarget;
+            document.getElementById('kanjiList').value = settings.kanjiList || 'joyo';
 
             renderFaces(faces);
             renderSelectedIcon(selected);
@@ -448,6 +465,7 @@
             settings.weatherLon = parseFloat(document.getElementById('lon').value);
             settings.clockArt = document.getElementById('clockArt').value;
             settings.calendarDatePattern = document.getElementById('calendarPattern').value.trim() || 'dd/MM';
+            settings.kanjiList = document.getElementById('kanjiList').value;
 
             await fetch(`${API}/settings`, {
                 method: 'POST',
