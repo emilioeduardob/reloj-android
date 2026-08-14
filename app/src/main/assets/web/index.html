@@ -13,13 +13,14 @@
             background: var(--bg); color: var(--fg);
         }
         h1 { font-size: 1.4rem; margin-top: 0; }
+        h2 { font-size: 1.1rem; margin-top: 0; }
         .card {
             background: #111; border: 1px solid var(--dim);
             border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
         }
         label { display: block; margin: 0.6rem 0 0.2rem; font-size: 0.9rem; }
         input[type="range"] { width: 100%; }
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], select {
             width: 100%; padding: 0.4rem; background: #000; color: var(--fg);
             border: 1px solid var(--dim); border-radius: 4px;
         }
@@ -47,6 +48,10 @@
             padding: 0.6rem 1.2rem; border-radius: 4px; font-weight: bold; cursor: pointer;
         }
         button:hover { opacity: 0.9; }
+        button.secondary {
+            background: #222; color: var(--fg); border: 1px solid var(--dim);
+        }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
         #preview {
             display: grid; grid-template-columns: repeat(37, 1fr);
             width: 100%; max-width: 640px; aspect-ratio: 37 / 8;
@@ -54,6 +59,56 @@
         }
         #preview div { border-radius: 20%; }
         .status { font-size: 0.85rem; color: #888; }
+
+        .icon-browser-controls {
+            display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;
+            margin-bottom: 0.8rem;
+        }
+        .icon-browser-controls > * { flex: 1 1 120px; }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.6rem;
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 0.4rem;
+            background: #000;
+            border: 1px solid var(--dim);
+            border-radius: 4px;
+        }
+        .icon-item {
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; padding: 0.4rem; border-radius: 4px;
+            border: 1px solid transparent;
+        }
+        .icon-item:hover { background: #1a1a1a; border-color: var(--dim); }
+        .icon-item.selected { border-color: var(--fg); background: #0a1a0a; }
+        .icon-item img {
+            width: 64px; height: 64px; image-rendering: pixelated;
+            background: #050505; border-radius: 4px;
+        }
+        .icon-item span {
+            font-size: 0.65rem; text-align: center; margin-top: 0.2rem;
+            color: #aaa; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .icon-item .badge {
+            font-size: 0.6rem; color: var(--fg); background: #002200;
+            padding: 0.05rem 0.3rem; border-radius: 4px; margin-top: 0.2rem;
+        }
+        .pagination {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 0.6rem;
+        }
+        .selected-icon {
+            display: flex; align-items: center; gap: 0.8rem;
+            padding: 0.6rem; background: #000; border-radius: 4px;
+            border: 1px solid var(--dim); margin-bottom: 0.8rem;
+        }
+        .selected-icon img { width: 64px; height: 64px; image-rendering: pixelated; }
+        .selected-icon .info { flex: 1; }
+        .selected-icon .name { font-weight: bold; }
+        .selected-icon .meta { font-size: 0.8rem; color: #888; }
     </style>
 </head>
 <body>
@@ -75,6 +130,37 @@
     </div>
 
     <div class="card">
+        <h2>Clock Icon</h2>
+        <div id="selectedIcon" class="selected-icon" style="display: none;">
+            <img id="selectedIconImg" src="" alt="">
+            <div class="info">
+                <div class="name" id="selectedIconName">-</div>
+                <div class="meta" id="selectedIconMeta">-</div>
+            </div>
+            <button class="secondary" id="clearIcon">Clear</button>
+        </div>
+
+        <div class="icon-browser-controls">
+            <div>
+                <label for="iconCategory">Category</label>
+                <select id="iconCategory"></select>
+            </div>
+            <div>
+                <label for="iconSearch">Search</label>
+                <input id="iconSearch" type="text" placeholder="e.g. pokemon">
+            </div>
+            <button id="searchIcons">Search</button>
+        </div>
+
+        <div class="icon-grid" id="iconGrid"></div>
+        <div class="pagination">
+            <button class="secondary" id="prevPage" disabled>Previous</button>
+            <span class="status" id="pageInfo">Page 1</span>
+            <button class="secondary" id="nextPage" disabled>Next</button>
+        </div>
+    </div>
+
+    <div class="card">
         <h2>Settings</h2>
         <label for="rotation">Rotation interval (seconds)</label>
         <input id="rotation" type="range" min="5" max="300" step="5">
@@ -89,7 +175,7 @@
         <label for="lon">Longitude</label>
         <input id="lon" type="number" step="any">
 
-        <label for="clockArt">Clock art</label>
+        <label for="clockArt">Clock art fallback</label>
         <select id="clockArt">
             <option value="ABSTRACT">Abstract</option>
             <option value="FLOWER">Flower</option>
@@ -103,13 +189,22 @@
 
     <script>
         const API = '/api';
+        const ICONS_PER_PAGE = 80;
+
+        let iconPage = 0;
+        let iconCategory = '';
+        let iconSearch = '';
+        let iconTotal = 0;
+        let currentSettings = null;
 
         async function load() {
-            const [settings, faces, status] = await Promise.all([
+            const [settings, faces, status, selected] = await Promise.all([
                 fetch(`${API}/settings`).then(r => r.json()),
                 fetch(`${API}/faces`).then(r => r.json()),
-                fetch(`${API}/status`).then(r => r.json())
+                fetch(`${API}/status`).then(r => r.json()),
+                fetch(`${API}/icons/selected`).then(r => r.json())
             ]);
+            currentSettings = settings;
 
             document.getElementById('port').textContent = settings.serverPort;
             document.getElementById('currentFace').textContent = status.currentFaceName || status.currentFaceId || '-';
@@ -132,6 +227,128 @@
                     </label>`;
                 facesEl.appendChild(row);
             });
+
+            renderSelectedIcon(selected);
+        }
+
+        async function loadCategories() {
+            const categories = await fetch(`${API}/icons/categories`).then(r => r.json());
+            const select = document.getElementById('iconCategory');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                select.appendChild(opt);
+            });
+            // Auto-load the default category once categories are known.
+            await searchIcons();
+        }
+
+        async function searchIcons() {
+            iconCategory = document.getElementById('iconCategory').value;
+            iconSearch = document.getElementById('iconSearch').value.trim();
+            iconPage = 0;
+            await fetchIcons();
+        }
+
+        async function fetchIcons() {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = '<span class="status">Loading...</span>';
+
+            const url = new URL(`${API}/icons`, window.location.origin);
+            url.searchParams.set('category', iconCategory);
+            url.searchParams.set('search', iconSearch);
+            url.searchParams.set('count', ICONS_PER_PAGE);
+            url.searchParams.set('page', iconPage);
+
+            try {
+                const data = await fetch(url.toString()).then(r => r.json());
+                iconTotal = data.total;
+                renderIconGrid(data.icons);
+                updatePagination();
+            } catch (e) {
+                grid.innerHTML = '<span class="status">Failed to load icons</span>';
+            }
+        }
+
+        function renderIconGrid(icons) {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = '';
+            if (!icons.length) {
+                grid.innerHTML = '<span class="status">No icons found</span>';
+                return;
+            }
+
+            icons.forEach(icon => {
+                const item = document.createElement('div');
+                item.className = 'icon-item';
+                if (currentSettings && currentSettings.clockIconId === icon.id) {
+                    item.classList.add('selected');
+                }
+                const imgSrc = `${API}/icons/${icon.id}/thumbnail?path=${encodeURIComponent(icon.thumbnailPath)}`;
+                item.innerHTML = `
+                    <img src="${imgSrc}" alt="${escapeHtml(icon.name)}" loading="lazy">
+                    <span>${escapeHtml(icon.name)}</span>
+                    ${icon.animated ? '<span class="badge">GIF</span>' : ''}
+                `;
+                item.addEventListener('click', () => selectIcon(icon, item));
+                grid.appendChild(item);
+            });
+        }
+
+        function updatePagination() {
+            document.getElementById('pageInfo').textContent = `Page ${iconPage + 1} (${iconTotal} icons)`;
+            document.getElementById('prevPage').disabled = iconPage === 0;
+            document.getElementById('nextPage').disabled = (iconPage + 1) * ICONS_PER_PAGE >= iconTotal;
+        }
+
+        async function selectIcon(icon, element) {
+            const res = await fetch(`${API}/icons/select`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ iconId: icon.id })
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Failed to select icon');
+                return;
+            }
+            currentSettings.clockIconId = icon.id;
+            renderSelectedIcon({ selected: true, icon });
+            // Refresh grid highlights
+            document.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
+            if (element) element.classList.add('selected');
+        }
+
+        async function clearIcon() {
+            await fetch(`${API}/icons/selected`, { method: 'DELETE' });
+            currentSettings.clockIconId = null;
+            renderSelectedIcon({ selected: false, icon: null });
+            document.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
+        }
+
+        function renderSelectedIcon(selected) {
+            const container = document.getElementById('selectedIcon');
+            if (!selected || !selected.selected) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            document.getElementById('selectedIconName').textContent = selected.icon?.name || 'Selected icon';
+            document.getElementById('selectedIconMeta').textContent = selected.icon?.animated ? 'Animated' : 'Static';
+            const img = document.getElementById('selectedIconImg');
+            if (selected.icon?.thumbnailPath) {
+                img.src = `${API}/icons/${selected.icon.id}/thumbnail?path=${encodeURIComponent(selected.icon.thumbnailPath)}`;
+            } else {
+                img.src = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         document.getElementById('rotation').addEventListener('input', e => {
@@ -155,9 +372,22 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)
             });
+            currentSettings = settings;
             alert('Saved');
             load();
         });
+
+        document.getElementById('searchIcons').addEventListener('click', searchIcons);
+        document.getElementById('iconSearch').addEventListener('keydown', e => {
+            if (e.key === 'Enter') searchIcons();
+        });
+        document.getElementById('prevPage').addEventListener('click', async () => {
+            if (iconPage > 0) { iconPage--; await fetchIcons(); }
+        });
+        document.getElementById('nextPage').addEventListener('click', async () => {
+            if ((iconPage + 1) * ICONS_PER_PAGE < iconTotal) { iconPage++; await fetchIcons(); }
+        });
+        document.getElementById('clearIcon').addEventListener('click', clearIcon);
 
         async function updatePreview() {
             try {
@@ -176,6 +406,7 @@
             } catch (e) { /* ignore */ }
         }
 
+        loadCategories();
         load();
         setInterval(updatePreview, 500);
         setInterval(load, 5000);

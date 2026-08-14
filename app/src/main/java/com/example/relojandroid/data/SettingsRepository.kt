@@ -34,6 +34,7 @@ class SettingsRepository(private val context: Context) {
         val SERVER_PORT = intPreferencesKey("server_port")
         val BRIGHTNESS = floatPreferencesKey("brightness")
         val CLOCK_ART = stringPreferencesKey("clock_art")
+        val CLOCK_ICON_ID = stringPreferencesKey("clock_icon_id")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
@@ -46,7 +47,8 @@ class SettingsRepository(private val context: Context) {
             exchangeSource = prefs[Keys.EXCHANGE_SOURCE] ?: DEFAULT_SETTINGS.exchangeSource,
             serverPort = prefs[Keys.SERVER_PORT] ?: DEFAULT_SETTINGS.serverPort,
             brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness,
-            clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt
+            clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt,
+            clockIconId = prefs[Keys.CLOCK_ICON_ID]
         )
     }
 
@@ -61,6 +63,11 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.SERVER_PORT] = settings.serverPort
             prefs[Keys.BRIGHTNESS] = settings.brightness
             prefs[Keys.CLOCK_ART] = settings.clockArt
+            if (settings.clockIconId != null) {
+                prefs[Keys.CLOCK_ICON_ID] = settings.clockIconId
+            } else {
+                prefs -= Keys.CLOCK_ICON_ID
+            }
         }
     }
 
