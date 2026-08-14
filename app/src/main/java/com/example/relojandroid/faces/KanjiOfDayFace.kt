@@ -15,10 +15,10 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
     override val id = "kanji"
     override val name = "Kanji of the Day"
 
-    // Double the base density so the kanji has enough pixels to be legible.
-    private val matrixWidth = PixelMatrix.WIDTH * 2
-    private val matrixHeight = PixelMatrix.HEIGHT * 2
-    private val kanjiSize = 16
+    // Use 4x the base density so the kanji has enough pixels to be legible.
+    private val matrixWidth = PixelMatrix.WIDTH * 4
+    private val matrixHeight = PixelMatrix.HEIGHT * 4
+    private val kanjiSize = 32
     private val textAreaWidth = matrixWidth - kanjiSize
     private val textRowHeight = matrixHeight / 2
 
