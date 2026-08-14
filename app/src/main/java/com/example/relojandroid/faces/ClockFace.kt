@@ -9,19 +9,19 @@ import com.example.relojandroid.engine.drawBigChar
 import com.example.relojandroid.engine.drawBigString
 import com.example.relojandroid.engine.drawClockArt
 import com.example.relojandroid.engine.measureBigString
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class ClockFace : Face {
     override val id = "clock"
     override val name = "Clock"
 
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    private val timeFormat = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 
     override suspend fun render(settings: Settings): PixelMatrix {
-        val now = Calendar.getInstance()
-        val timeStr = timeFormat.format(now.time)
+        val now = LocalDateTime.now()
+        val timeStr = timeFormat.format(now)
         val art = ClockArt.fromId(settings.clockArt)
 
         val timeWidth = measureBigString(timeStr)
@@ -38,7 +38,7 @@ class ClockFace : Face {
             .drawBigString(timeStr, timeX, timeY, Color(0xFFFFFFFF))
 
         // Blinking colon: dim it every other second.
-        val showColon = now.get(Calendar.SECOND) % 2 == 0
+        val showColon = now.second % 2 == 0
         if (!showColon) {
             // Colon is the 3rd character (index 2) of "HH:mm".
             val colonX = timeX + measureBigString(timeStr.take(2)) + 1

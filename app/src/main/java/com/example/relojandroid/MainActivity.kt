@@ -9,17 +9,17 @@ import com.example.relojandroid.ui.theme.RelojAndroidTheme
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var application: RelojApplication
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        application = this.applicationContext as RelojApplication
 
         enableEdgeToEdge()
 
+        val app = applicationContext as? RelojApplication
+            ?: throw IllegalStateException("Application must be RelojApplication")
+
         setContent {
             RelojAndroidTheme {
-                PixelClockScreen(matrixFlow = application.faceEngine.matrix)
+                PixelClockScreen(matrixFlow = app.faceEngine.matrix)
             }
         }
     }

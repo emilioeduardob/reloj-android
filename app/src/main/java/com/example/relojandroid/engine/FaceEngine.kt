@@ -6,9 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 class FaceEngine(
     private val faces: List<Face>,
@@ -20,44 +18,38 @@ class FaceEngine(
     private val _currentFaceId = MutableStateFlow<String?>(null)
     val currentFaceId: StateFlow<String?> = _currentFaceId
 
-    private val _currentFaceName = MutableStateFlow<String>("")
+    private val _currentFaceName = MutableStateFlow("")
     val currentFaceName: StateFlow<String> = _currentFaceName
 
     suspend fun run() {
-        combine(settingsFlow, tickFlow()) { settings, _ -> settings }
-            .collect { settings ->
-                val enabledFaces = faces.filter { it.id in settings.enabledFaces && it.isAvailable(settings) }
-                if (enabledFaces.isEmpty()) {
-                    _matrix.value = renderNoFaces()
-                    _currentFaceId.value = null
-                    _currentFaceName.value = ""
-                    delay(1000)
-                    return@collect
-                }
+        while (true) {
+            val settings = settingsFlow.first()
+            val enabledFaces = faces.filter { it.id in settings.enabledFaces && it.isAvailable(settings) }
 
-                for (face in enabledFaces) {
-                    _currentFaceId.value = face.id
-                    _currentFaceName.value = face.name
-                    val faceStart = System.currentTimeMillis()
-                    val durationMs = settings.rotationSeconds * 1000L
+            if (enabledFaces.isEmpty()) {
+                _matrix.value = renderNoFaces()
+                _currentFaceId.value = null
+                _currentFaceName.value = ""
+                delay(1000)
+                continue
+            }
 
-                    // Render face repeatedly until its turn expires.
-                    while (System.currentTimeMillis() - faceStart < durationMs) {
-                        try {
-                            _matrix.value = face.render(settings)
-                        } catch (e: Exception) {
-                            _matrix.value = renderError(e.message ?: "ERR")
-                        }
-                        delay(200) // ~5 FPS internal refresh
+            for (face in enabledFaces) {
+                _currentFaceId.value = face.id
+                _currentFaceName.value = face.name
+                val faceStart = System.currentTimeMillis()
+                val durationMs = settings.rotationSeconds * 1000L
+
+                // Render face repeatedly until its turn expires.
+                while (System.currentTimeMillis() - faceStart < durationMs) {
+                    _matrix.value = try {
+                        face.render(settings)
+                    } catch (e: Exception) {
+                        renderError(e.message ?: "ERR")
                     }
+                    delay(200) // ~5 FPS internal refresh
                 }
             }
-    }
-
-    private fun tickFlow(): Flow<Long> = flow {
-        while (true) {
-            emit(System.currentTimeMillis())
-            delay(200)
         }
     }
 
