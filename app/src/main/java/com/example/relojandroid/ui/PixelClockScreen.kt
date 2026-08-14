@@ -56,9 +56,10 @@ private fun PixelCanvas(
         val offsetX = (size.width - totalW) / 2f
         val offsetY = (size.height - totalH) / 2f
 
-        val gap = 0.08f * cellSize
+        val gap = 0.10f * cellSize
         val dotSize = cellSize - 2 * gap
         val corner = dotSize * 0.06f
+        val bezelColor = Color(0xFF3A3A3A)
 
         for (y in 0 until matrix.height) {
             for (x in 0 until matrix.width) {
@@ -68,11 +69,21 @@ private fun PixelCanvas(
                 val left = offsetX + x * cellSize + gap
                 val top = offsetY + y * cellSize + gap
 
-                // Soft glow / shadow behind the pixel.
-                val glowSize = dotSize * 1.25f
+                // Dark gray bezel / outline that mimics the LED housing.
+                val bezelSize = dotSize * 1.12f
+                val bezelOffset = (bezelSize - dotSize) / 2f
+                drawRoundRect(
+                    color = bezelColor,
+                    topLeft = Offset(left - bezelOffset, top - bezelOffset),
+                    size = Size(bezelSize, bezelSize),
+                    cornerRadius = CornerRadius(bezelSize * 0.06f, bezelSize * 0.06f)
+                )
+
+                // Soft glow around the pixel.
+                val glowSize = dotSize * 1.22f
                 val glowOffset = (glowSize - dotSize) / 2f
                 drawRoundRect(
-                    color = color.copy(alpha = 0.28f),
+                    color = color.copy(alpha = 0.22f),
                     topLeft = Offset(left - glowOffset, top - glowOffset),
                     size = Size(glowSize, glowSize),
                     cornerRadius = CornerRadius(glowSize * 0.06f, glowSize * 0.06f)
