@@ -104,3 +104,69 @@ fun PixelMatrix.drawString(
 }
 
 fun measureString(text: String): Int = text.length * 4 - 1
+
+/**
+ * 5x7 pixel font for large time digits and the colon.
+ * Each character is encoded as 7 rows of 5 bits.
+ */
+private val bigDigits = mapOf(
+    '0' to listOf("11111", "10001", "10011", "10101", "11001", "10001", "11111"),
+    '1' to listOf("00100", "01100", "00100", "00100", "00100", "00100", "01110"),
+    '2' to listOf("11110", "00001", "00001", "00110", "01000", "10000", "11111"),
+    '3' to listOf("11110", "00001", "00010", "00110", "00001", "00001", "11110"),
+    '4' to listOf("00010", "00110", "01010", "10010", "11111", "00010", "00010"),
+    '5' to listOf("11111", "10000", "11110", "00001", "00001", "10001", "01110"),
+    '6' to listOf("00110", "01000", "10000", "11110", "10001", "10001", "01110"),
+    '7' to listOf("11111", "00001", "00010", "00100", "01000", "01000", "01000"),
+    '8' to listOf("01110", "10001", "10001", "01110", "10001", "10001", "01110"),
+    '9' to listOf("01110", "10001", "10001", "01111", "00001", "00010", "01100"),
+)
+
+private val bigSymbols = mapOf(
+    ':' to listOf("000", "000", "010", "000", "010", "000", "000"),
+)
+
+private val bigGlyphs = bigDigits + bigSymbols
+
+private fun bigGlyphFor(char: Char): List<String> {
+    return bigGlyphs[char]
+        ?: bigGlyphs['?']
+        ?: listOf("010", "101", "010", "000", "010", "000", "000")
+}
+
+fun PixelMatrix.drawBigChar(
+    char: Char,
+    x: Int,
+    y: Int,
+    color: Color
+): PixelMatrix {
+    val glyph = bigGlyphFor(char)
+    return mutate {
+        glyph.forEachIndexed { row, line ->
+            line.forEachIndexed { col, bit ->
+                if (bit == '1') {
+                    this[x + col, y + row] = color
+                }
+            }
+        }
+    }
+}
+
+fun PixelMatrix.drawBigString(
+    text: String,
+    x: Int,
+    y: Int,
+    color: Color
+): PixelMatrix {
+    var result = this
+    var cursorX = x
+    text.forEach { char ->
+        result = result.drawBigChar(char, cursorX, y, color)
+        cursorX += bigGlyphFor(char)[0].length + 1
+    }
+    return result
+}
+
+fun measureBigString(text: String): Int {
+    return text.sumOf { bigGlyphFor(it)[0].length + 1 } - 1
+}

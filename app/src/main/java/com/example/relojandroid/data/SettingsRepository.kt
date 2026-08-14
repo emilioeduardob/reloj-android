@@ -33,6 +33,7 @@ class SettingsRepository(private val context: Context) {
         val EXCHANGE_SOURCE = stringPreferencesKey("exchange_source")
         val SERVER_PORT = intPreferencesKey("server_port")
         val BRIGHTNESS = floatPreferencesKey("brightness")
+        val CLOCK_ART = stringPreferencesKey("clock_art")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
@@ -44,7 +45,8 @@ class SettingsRepository(private val context: Context) {
             weatherLon = prefs[Keys.WEATHER_LON]?.toDoubleOrNull() ?: DEFAULT_SETTINGS.weatherLon,
             exchangeSource = prefs[Keys.EXCHANGE_SOURCE] ?: DEFAULT_SETTINGS.exchangeSource,
             serverPort = prefs[Keys.SERVER_PORT] ?: DEFAULT_SETTINGS.serverPort,
-            brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness
+            brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness,
+            clockArt = prefs[Keys.CLOCK_ART] ?: DEFAULT_SETTINGS.clockArt
         )
     }
 
@@ -58,6 +60,7 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.EXCHANGE_SOURCE] = settings.exchangeSource
             prefs[Keys.SERVER_PORT] = settings.serverPort
             prefs[Keys.BRIGHTNESS] = settings.brightness
+            prefs[Keys.CLOCK_ART] = settings.clockArt
         }
     }
 

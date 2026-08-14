@@ -1,5 +1,6 @@
 package com.example.relojandroid.data
 
+import com.example.relojandroid.engine.ClockArt
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,5 +12,6 @@ data class Settings(
     val weatherLon: Double = -57.3333,
     val exchangeSource: String = "bcp",
     val serverPort: Int = 8080,
-    val brightness: Float = 1.0f
+    val brightness: Float = 1.0f,
+    val clockArt: String = ClockArt.ABSTRACT.name
 )
