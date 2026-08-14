@@ -5,7 +5,8 @@ import com.example.relojandroid.data.ExchangeApi
 import com.example.relojandroid.data.Settings
 import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
-import com.example.relojandroid.engine.drawString
+import com.example.relojandroid.engine.drawBigString
+import com.example.relojandroid.engine.drawCoinIcon
 
 class ExchangeFace(private val api: ExchangeApi = ExchangeApi()) : Face {
     override val id = "exchange"
@@ -27,17 +28,18 @@ class ExchangeFace(private val api: ExchangeApi = ExchangeApi()) : Face {
             cachedResult!!
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
+                .drawBigString("NO DATA", 2, 1, Color(0xFFFFFFFF))
         }
 
-        // Alternate between buy and sell every 3 seconds on a single line.
-        val showBuy = (now / 3000) % 2 == 0L
-        val label = if (showBuy) "C" else "V"
-        val rate = if (showBuy) exchange.buy else exchange.sell
-        val line = "$label:${formatRate(rate)}"
+        // Alternate between buy and sell every 3 seconds.
+        val label = if ((now / 3000) % 2 == 0L) "C" else "V"
+        val rate = if ((now / 3000) % 2 == 0L) exchange.buy else exchange.sell
+        val line = "$label${formatRate(rate)}"
 
+        // LaMetric layout: 8x8 coin icon on the left, big white rate on the right.
         return PixelMatrix.empty()
-            .drawString(line, 2, 2, Color(0xFFFFFF00))
+            .drawCoinIcon(offsetX = 0, offsetY = 0)
+            .drawBigString(line, 8, 1, Color(0xFFFFFFFF))
     }
 
     private fun formatRate(rate: Double): String {

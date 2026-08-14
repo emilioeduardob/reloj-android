@@ -30,7 +30,7 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
             cachedResult!!
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawBigString("NO DATA", 2, 1, Color(0xFFFF0000))
+                .drawBigString("NO DATA", 2, 1, Color(0xFFFFFFFF))
         }
 
         val tempStr = "${weather.temperature.toInt()} C"
@@ -42,6 +42,6 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
 
         return PixelMatrix.empty()
             .drawWeatherIcon(icon, offsetX = 0, offsetY = 0)
-            .drawBigString(tempStr, centeredTextX.coerceAtLeast(9), 1, Color(0xFFFFFF00))
+            .drawBigString(tempStr, centeredTextX.coerceAtLeast(9), 1, Color(0xFFFFFFFF))
     }
 }
