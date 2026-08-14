@@ -37,13 +37,11 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
         val icon = WeatherIcon.fromWeatherCode(weather.weatherCode, weather.isDay)
 
         // LaMetric layout: 8x8 icon on the left, big text on the right.
-        val textX = 9
-        val textY = 1
         val textWidth = measureBigString(tempStr)
         val centeredTextX = 8 + (PixelMatrix.WIDTH - 8 - textWidth) / 2
 
         return PixelMatrix.empty()
             .drawWeatherIcon(icon, offsetX = 0, offsetY = 0)
-            .drawBigString(tempStr, centeredTextX.coerceAtLeast(textX), textY, Color(0xFFFFFF00))
+            .drawBigString(tempStr, centeredTextX.coerceAtLeast(9), 1, Color(0xFFFFFF00))
     }
 }
