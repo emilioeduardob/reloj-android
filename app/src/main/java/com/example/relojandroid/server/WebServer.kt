@@ -19,6 +19,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
+import androidx.compose.ui.graphics.Color
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.flow.first
@@ -108,7 +109,7 @@ class WebServer(
         }
     }
 
-    private fun colorToHex(color: androidx.compose.ui.graphics.Color): String {
+    private fun colorToHex(color: Color): String {
         val r = (color.red * 255).toInt()
         val g = (color.green * 255).toInt()
         val b = (color.blue * 255).toInt()
