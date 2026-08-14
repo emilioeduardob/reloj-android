@@ -12,20 +12,20 @@ private val paleYellow = Color(0xFFFFFFB0)
 
 private val coinPattern: List<String> = listOf(
     "........",
-    "..LLLL..",
-    ".LGGGGL.",
-    ".LGDDGL.",
-    ".LGDDGL.",
-    ".LGGGGL.",
-    "..LLLL..",
+    "..RRRR..",
+    ".RBBBBR.",
+    ".RBCCBR.",
+    ".RBCCBR.",
+    ".RBBBBR.",
+    "..RRRR..",
     "........"
 )
 
 private fun colorFor(char: Char): Color? = when (char) {
-    'D' -> darkGold
-    'G' -> gold
-    'L' -> lightGold
-    'W' -> paleYellow
+    'C' -> darkGold
+    'B' -> gold
+    'R' -> lightGold
+    'P' -> paleYellow
     else -> null
 }
 

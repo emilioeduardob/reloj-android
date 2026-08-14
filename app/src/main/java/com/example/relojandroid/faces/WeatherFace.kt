@@ -7,6 +7,7 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.WeatherIcon
 import com.example.relojandroid.engine.drawBigString
+import com.example.relojandroid.engine.drawString
 import com.example.relojandroid.engine.drawWeatherIcon
 import com.example.relojandroid.engine.measureBigString
 
@@ -30,7 +31,7 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
             cachedResult!!
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawBigString("NO DATA", 2, 1, Color(0xFFFFFFFF))
+                .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
         }
 
         val tempStr = "${weather.temperature.toInt()} C"
