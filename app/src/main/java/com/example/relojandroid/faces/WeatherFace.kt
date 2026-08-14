@@ -101,20 +101,20 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
     ): PixelMatrix {
         val white = Color(0xFFFFFFFF)
         val yellow = Color(0xFFFFFF00)
-        var result = matrix
-        icon.pixels.forEachIndexed { row, cols ->
-            cols.forEachIndexed { col, value ->
-                val color = when (value) {
-                    1 -> white
-                    2 -> yellow
-                    else -> null
-                }
-                if (color != null) {
-                    result = result.set(x + col, y + row, color)
+        return matrix.mutate {
+            icon.pixels.forEachIndexed { row, cols ->
+                cols.forEachIndexed { col, value ->
+                    val color = when (value) {
+                        1 -> white
+                        2 -> yellow
+                        else -> null
+                    }
+                    if (color != null) {
+                        this[x + col, y + row] = color
+                    }
                 }
             }
         }
-        return result
     }
 }
 

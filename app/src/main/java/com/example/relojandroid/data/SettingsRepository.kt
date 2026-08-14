@@ -1,6 +1,7 @@
 package com.example.relojandroid.data
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -10,10 +11,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "reloj_settings")
+
+private val TAG = "SettingsRepository"
+private val DEFAULT_SETTINGS = Settings()
 
 class SettingsRepository(private val context: Context) {
 
@@ -32,16 +37,14 @@ class SettingsRepository(private val context: Context) {
 
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
         Settings(
-            enabledFaces = prefs[Keys.ENABLED_FACES]?.let {
-                json.decodeFromString(it)
-            } ?: Settings().enabledFaces,
-            rotationSeconds = prefs[Keys.ROTATION_SECONDS] ?: Settings().rotationSeconds,
-            weatherCity = prefs[Keys.WEATHER_CITY] ?: Settings().weatherCity,
-            weatherLat = prefs[Keys.WEATHER_LAT]?.toDouble() ?: Settings().weatherLat,
-            weatherLon = prefs[Keys.WEATHER_LON]?.toDouble() ?: Settings().weatherLon,
-            exchangeSource = prefs[Keys.EXCHANGE_SOURCE] ?: Settings().exchangeSource,
-            serverPort = prefs[Keys.SERVER_PORT] ?: Settings().serverPort,
-            brightness = prefs[Keys.BRIGHTNESS] ?: Settings().brightness
+            enabledFaces = prefs.parseStringList(Keys.ENABLED_FACES) ?: DEFAULT_SETTINGS.enabledFaces,
+            rotationSeconds = prefs[Keys.ROTATION_SECONDS] ?: DEFAULT_SETTINGS.rotationSeconds,
+            weatherCity = prefs[Keys.WEATHER_CITY] ?: DEFAULT_SETTINGS.weatherCity,
+            weatherLat = prefs[Keys.WEATHER_LAT]?.toDoubleOrNull() ?: DEFAULT_SETTINGS.weatherLat,
+            weatherLon = prefs[Keys.WEATHER_LON]?.toDoubleOrNull() ?: DEFAULT_SETTINGS.weatherLon,
+            exchangeSource = prefs[Keys.EXCHANGE_SOURCE] ?: DEFAULT_SETTINGS.exchangeSource,
+            serverPort = prefs[Keys.SERVER_PORT] ?: DEFAULT_SETTINGS.serverPort,
+            brightness = prefs[Keys.BRIGHTNESS] ?: DEFAULT_SETTINGS.brightness
         )
     }
 
@@ -55,6 +58,16 @@ class SettingsRepository(private val context: Context) {
             prefs[Keys.EXCHANGE_SOURCE] = settings.exchangeSource
             prefs[Keys.SERVER_PORT] = settings.serverPort
             prefs[Keys.BRIGHTNESS] = settings.brightness
+        }
+    }
+
+    private fun Preferences.parseStringList(key: Preferences.Key<String>): List<String>? {
+        val raw = this[key] ?: return null
+        return try {
+            json.decodeFromString<List<String>>(raw)
+        } catch (e: SerializationException) {
+            Log.w(TAG, "Failed to parse list for key ${key.name}, falling back to default", e)
+            null
         }
     }
 }
