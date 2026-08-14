@@ -7,8 +7,10 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.WeatherIcon
 import com.example.relojandroid.engine.drawBigString
+import com.example.relojandroid.engine.drawString
 import com.example.relojandroid.engine.drawWeatherIcon
 import com.example.relojandroid.engine.measureBigString
+import kotlinx.coroutines.CancellationException
 
 class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
     override val id = "weather"
@@ -28,9 +30,11 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
                 lastFetch = now
             }
             cachedResult!!
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return PixelMatrix.empty()
-                .drawBigString("NO DATA", 2, 1, Color(0xFFFF0000))
+                .drawString("NO DATA", 2, 2, Color(0xFFFF0000))
         }
 
         val tempStr = "${weather.temperature.toInt()} C"
@@ -42,6 +46,6 @@ class WeatherFace(private val api: WeatherApi = WeatherApi()) : Face {
 
         return PixelMatrix.empty()
             .drawWeatherIcon(icon, offsetX = 0, offsetY = 0)
-            .drawBigString(tempStr, centeredTextX.coerceAtLeast(9), 1, Color(0xFFFFFF00))
+            .drawBigString(tempStr, centeredTextX.coerceAtLeast(9), 1, Color(0xFFFFFFFF))
     }
 }

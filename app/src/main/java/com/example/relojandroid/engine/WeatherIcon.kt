@@ -41,13 +41,13 @@ private val blue = Color(0xFF00AAFF)
 private val patterns: Map<WeatherIcon, List<String>> = mapOf(
     WeatherIcon.CLEAR_DAY to listOf(
         "...YY...",
-        ".YYYYYY.",
+        ".Y.YY.Y.",
+        "YY.YY.YY",
         "YYYYYYYY",
         "YYYYYYYY",
-        "YYYYYYYY",
-        ".YYYYYY.",
-        "...YY...",
-        "........"
+        "YY.YY.YY",
+        ".Y.YY.Y.",
+        "...YY..."
     ),
     WeatherIcon.CLEAR_NIGHT to listOf(
         "....YYYY",
@@ -144,13 +144,13 @@ fun PixelMatrix.drawWeatherIcon(
     offsetX: Int,
     offsetY: Int
 ): PixelMatrix {
-    var result = this
-    patterns[icon]?.forEachIndexed { row, line ->
-        line.forEachIndexed { col, char ->
-            colorFor(char)?.let { color ->
-                result = result.set(offsetX + col, offsetY + row, color)
+    return mutate {
+        patterns[icon]?.forEachIndexed { row, line ->
+            line.forEachIndexed { col, char ->
+                colorFor(char)?.let { color ->
+                    this[offsetX + col, offsetY + row] = color
+                }
             }
         }
     }
-    return result
 }

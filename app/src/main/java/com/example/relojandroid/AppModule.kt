@@ -3,6 +3,7 @@ package com.example.relojandroid
 import android.content.Context
 import com.example.relojandroid.data.IconRepository
 import com.example.relojandroid.data.LaMetricIconApi
+import com.example.relojandroid.faces.CalendarFace
 import com.example.relojandroid.faces.ClockFace
 import com.example.relojandroid.faces.ExchangeFace
 import com.example.relojandroid.faces.WeatherFace
@@ -17,6 +18,7 @@ object AppModule {
     fun provideFaces(iconRepository: IconRepository): List<Face> = listOf(
         ClockFace(iconRepository),
         WeatherFace(),
-        ExchangeFace()
+        ExchangeFace(iconRepository = iconRepository),
+        CalendarFace(iconRepository)
     )
 }
