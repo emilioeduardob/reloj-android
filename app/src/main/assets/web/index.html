@@ -260,8 +260,29 @@
                         <input type="checkbox" data-id="${face.id}" ${face.enabled ? 'checked' : ''}>
                         <span class="slider"></span>
                     </label>`;
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', saveFaces);
                 facesEl.appendChild(row);
             });
+        }
+
+        async function saveFaces() {
+            const enabled = Array.from(document.querySelectorAll('#faces input[type="checkbox"]'))
+                .filter(cb => cb.checked).map(cb => cb.dataset.id);
+
+            try {
+                const settings = await fetch(`${API}/settings`).then(r => r.json());
+                settings.enabledFaces = enabled;
+                await fetch(`${API}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                currentSettings = settings;
+            } catch (e) {
+                alert('Failed to save face state');
+                load();
+            }
         }
 
         async function refreshLive() {
