@@ -126,24 +126,24 @@ private enum class WeatherIcon(val pixels: List<List<Int>>) {
     SUN(
         listOf(
             listOf(2, 0, 0, 0, 0, 0, 0, 2),
-            listOf(0, 1, 0, 1, 1, 0, 1, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
             listOf(0, 0, 2, 2, 2, 2, 0, 0),
             listOf(0, 1, 2, 2, 2, 2, 1, 0),
             listOf(0, 1, 2, 2, 2, 2, 1, 0),
             listOf(0, 0, 2, 2, 2, 2, 0, 0),
-            listOf(0, 1, 0, 1, 1, 0, 1, 0),
+            listOf(0, 0, 0, 1, 1, 0, 0, 0),
             listOf(2, 0, 0, 0, 0, 0, 0, 2)
         )
     ),
     MOON(
         listOf(
             listOf(0, 0, 0, 0, 0, 0, 0, 0),
-            listOf(0, 0, 1, 2, 2, 2, 1, 0),
+            listOf(0, 0, 0, 2, 2, 2, 0, 0),
             listOf(0, 2, 2, 2, 0, 0, 0, 0),
             listOf(0, 2, 2, 0, 0, 0, 0, 0),
             listOf(0, 2, 2, 0, 0, 0, 0, 0),
             listOf(0, 2, 2, 2, 0, 0, 0, 0),
-            listOf(0, 0, 1, 2, 2, 2, 1, 0),
+            listOf(0, 0, 0, 2, 2, 2, 0, 0),
             listOf(0, 0, 0, 0, 0, 0, 0, 0)
         )
     ),
@@ -176,7 +176,7 @@ private enum class WeatherIcon(val pixels: List<List<Int>>) {
             listOf(0, 0, 0, 0, 0, 2, 2, 2),
             listOf(0, 0, 0, 0, 2, 2, 2, 2),
             listOf(0, 0, 1, 1, 2, 2, 0, 0),
-            listOf(0, 1, 1, 1, 1, 2, 1, 0),
+            listOf(0, 1, 1, 1, 1, 2, 2, 0),
             listOf(1, 1, 1, 1, 1, 1, 1, 2),
             listOf(1, 1, 1, 1, 1, 1, 1, 1),
             listOf(1, 1, 1, 1, 1, 1, 1, 1),
@@ -203,8 +203,8 @@ private enum class WeatherIcon(val pixels: List<List<Int>>) {
             listOf(1, 1, 1, 1, 1, 1, 1, 1),
             listOf(1, 1, 1, 1, 1, 1, 1, 1),
             listOf(1, 1, 1, 1, 1, 1, 1, 1),
-            listOf(0, 0, 1, 1, 1, 1, 0, 0),
-            listOf(0, 0, 1, 0, 0, 1, 0, 0)
+            listOf(0, 1, 0, 1, 0, 1, 0, 0),
+            listOf(0, 1, 0, 1, 0, 1, 0, 0)
         )
     ),
     SNOWFLAKE(
