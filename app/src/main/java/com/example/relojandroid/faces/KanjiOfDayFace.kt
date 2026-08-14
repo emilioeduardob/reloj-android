@@ -95,19 +95,16 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
     }
 
     private fun buildReading(details: KanjiDetails): String {
-        val readings = mutableListOf<String>()
-        readings += details.kunReadings.map { it.trimHyphenNotation() }
-        readings += details.onReadings.map { it.trimHyphenNotation() }
-
-        val joined = readings.filter { it.isNotBlank() }.distinct()
-        if (joined.isNotEmpty()) {
-            return joined.joinToString("  ")
-        }
-        return details.meanings.firstOrNull() ?: "?"
+        return details.kunReadings
+            .map { it.trimHyphenNotation() }
+            .firstOrNull { it.isNotBlank() }
+            ?: details.onReadings.map { it.trimHyphenNotation() }.firstOrNull { it.isNotBlank() }
+            ?: details.meanings.firstOrNull()
+            ?: "?"
     }
 
     private fun buildMeaning(details: KanjiDetails): String {
-        return details.meanings.joinToString("  ").ifBlank { "?" }
+        return details.meanings.firstOrNull()?.ifBlank { "?" } ?: "?"
     }
 
     private fun String.trimHyphenNotation(): String {
