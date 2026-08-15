@@ -9,6 +9,7 @@ import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.drawSampledText
 import com.example.relojandroid.engine.drawSampledTextScroll
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicInteger
 
 class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
 
@@ -26,6 +27,14 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
     private var cachedKanjiList: List<String>? = null
     private var cachedDetails: KanjiDetails? = null
     private var cachedDetailsDay: Int = -1
+    private var cachedManualIndex: Int = -1
+
+    // User-tap override for the day-of-year index. -1 means follow the calendar.
+    private val manualIndex = AtomicInteger(-1)
+
+    override suspend fun onTap(settings: Settings) {
+        manualIndex.incrementAndGet()
+    }
 
     override suspend fun render(settings: Settings): PixelMatrix {
         val listId = settings.kanjiList.ifBlank { "joyo" }
@@ -36,6 +45,8 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
                 cachedKanjiList = api.fetchList(listId)
                 cachedDetails = null
                 cachedDetailsDay = -1
+                manualIndex.set(-1)
+                cachedManualIndex = -1
             }
             cachedKanjiList
         } catch (e: Exception) {
@@ -48,7 +59,12 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
 
         val today = LocalDate.now()
         val dayOfYear = today.dayOfYear
-        val index = (dayOfYear - 1) % kanjiList.size
+        val override = manualIndex.get()
+        if (override != cachedManualIndex) {
+            cachedDetails = null
+            cachedManualIndex = override
+        }
+        val index = if (override >= 0) override.mod(kanjiList.size) else (dayOfYear - 1).mod(kanjiList.size)
         val dailyKanji = kanjiList[index]
 
         val details = try {

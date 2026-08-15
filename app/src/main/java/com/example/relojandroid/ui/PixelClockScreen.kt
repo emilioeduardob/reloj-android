@@ -1,6 +1,7 @@
 package com.example.relojandroid.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -12,6 +13,11 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -19,10 +25,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.relojandroid.engine.PixelMatrix
 import kotlinx.coroutines.flow.StateFlow
 import android.view.WindowManager
+import kotlin.math.abs
 
 @Composable
 fun PixelClockScreen(
     matrixFlow: StateFlow<PixelMatrix>,
+    onSwipeLeft: () -> Unit = {},
+    onSwipeRight: () -> Unit = {},
+    onTap: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val matrix by matrixFlow.collectAsStateWithLifecycle()
@@ -34,16 +44,58 @@ fun PixelClockScreen(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        PixelCanvas(matrix = matrix, modifier = Modifier.fillMaxSize())
+        PixelCanvas(
+            matrix = matrix,
+            onSwipeLeft = onSwipeLeft,
+            onSwipeRight = onSwipeRight,
+            onTap = onTap,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
 @Composable
 private fun PixelCanvas(
     matrix: PixelMatrix,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit,
+    onTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    var totalX = 0f
+                    var totalY = 0f
+                    var pointerUp = false
+
+                    while (!pointerUp) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull() ?: continue
+                        if (change.changedToUp()) {
+                            pointerUp = true
+                        } else {
+                            val positionChange = change.positionChange()
+                            totalX += positionChange.x
+                            totalY += positionChange.y
+                            change.consume()
+                        }
+                    }
+
+                    val absX = abs(totalX)
+                    val absY = abs(totalY)
+                    when {
+                        absX > SWIPE_THRESHOLD && absX > absY -> {
+                            if (totalX < 0) onSwipeLeft() else onSwipeRight()
+                        }
+                        absX < TAP_THRESHOLD && absY < TAP_THRESHOLD -> onTap()
+                    }
+                }
+            }
+    ) {
         if (matrix.width == 0 || matrix.height == 0) return@Canvas
 
         val cellW = size.width / matrix.width
@@ -119,3 +171,6 @@ private fun KeepScreenOn() {
         }
     }
 }
+
+private const val SWIPE_THRESHOLD = 120f
+private const val TAP_THRESHOLD = 24f
