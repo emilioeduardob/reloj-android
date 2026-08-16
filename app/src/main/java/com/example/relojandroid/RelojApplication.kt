@@ -30,7 +30,7 @@ class RelojApplication : Application() {
         settingsRepository = SettingsRepository(this)
         val iconRepository = AppModule.provideIconRepository(this)
         val faces = AppModule.provideFaces(iconRepository)
-        faceEngine = FaceEngine(faces, settingsRepository.settings)
+        faceEngine = FaceEngine(faces, settingsRepository.settings, applicationScope)
         webServer = WebServer(this, settingsRepository, iconRepository, faces, faceEngine)
 
         applicationScope.launch {

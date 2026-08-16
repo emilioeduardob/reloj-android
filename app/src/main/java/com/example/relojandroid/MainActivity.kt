@@ -19,7 +19,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RelojAndroidTheme {
-                PixelClockScreen(matrixFlow = app.faceEngine.matrix)
+                PixelClockScreen(
+                    matrixFlow = app.faceEngine.matrix,
+                    onSwipeLeft = { app.faceEngine.nextFace() },
+                    onSwipeRight = { app.faceEngine.previousFace() },
+                    onTap = { app.faceEngine.onTap() }
+                )
             }
         }
     }

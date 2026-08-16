@@ -13,4 +13,10 @@ interface Face {
      * more frequently than the default 200 ms cadence.
      */
     suspend fun isAnimated(settings: Settings): Boolean = false
+
+    /**
+     * Called when the user taps the screen while this face is active.
+     * Faces can use this to refresh their content or toggle a state.
+     */
+    suspend fun onTap(settings: Settings) {}
 }
