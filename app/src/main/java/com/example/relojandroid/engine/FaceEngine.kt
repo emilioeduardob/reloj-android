@@ -54,7 +54,7 @@ class FaceEngine(
             currentIndex = currentIndex.mod(enabledFaces.size)
             val face = enabledFaces[currentIndex]
             val durationMs = settings.rotationSeconds * 1000L
-            val faceStart = System.currentTimeMillis()
+            var faceStart = System.currentTimeMillis()
             val animated = face.isAnimated(settings)
             val refreshMs = if (animated) ANIMATED_REFRESH_MS else DEFAULT_REFRESH_MS
 
@@ -71,13 +71,18 @@ class FaceEngine(
                     renderError()
                 }
 
-                command = withTimeoutOrNull(refreshMs) { navigationChannel.receive() }
+                val received = withTimeoutOrNull(refreshMs) { navigationChannel.receive() }
+                if (received == NavigationCommand.RESET_TIMER) {
+                    faceStart = System.currentTimeMillis()
+                } else {
+                    command = received
+                }
             }
 
             currentIndex = when (command) {
                 NavigationCommand.NEXT -> (currentIndex + 1).mod(enabledFaces.size)
                 NavigationCommand.PREVIOUS -> (currentIndex - 1).mod(enabledFaces.size)
-                null -> (currentIndex + 1).mod(enabledFaces.size)
+                NavigationCommand.RESET_TIMER, null -> (currentIndex + 1).mod(enabledFaces.size)
             }
         }
     }
@@ -96,12 +101,16 @@ class FaceEngine(
             val enabledFaces = faces.filter { it.id in settings.enabledFaces && it.isAvailable(settings) }
             val currentId = _currentFaceId.value
             val face = enabledFaces.find { it.id == currentId } ?: return@launch
-            try {
+            val shouldHold = try {
                 face.onTap(settings)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 // Ignore tap errors so the engine keeps running.
+                false
+            }
+            if (shouldHold) {
+                navigationChannel.trySend(NavigationCommand.RESET_TIMER)
             }
         }
     }
@@ -116,5 +125,5 @@ class FaceEngine(
             .drawString("ERR", 2, 1, Color(0xFFFF0000))
     }
 
-    private enum class NavigationCommand { NEXT, PREVIOUS }
+    private enum class NavigationCommand { NEXT, PREVIOUS, RESET_TIMER }
 }

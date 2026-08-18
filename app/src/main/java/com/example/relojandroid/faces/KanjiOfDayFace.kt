@@ -8,8 +8,16 @@ import com.example.relojandroid.engine.Face
 import com.example.relojandroid.engine.PixelMatrix
 import com.example.relojandroid.engine.drawSampledText
 import com.example.relojandroid.engine.drawSampledTextScroll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.cos
+import kotlin.math.sin
 
 class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
 
@@ -32,11 +40,33 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
     // User-tap override for the day-of-year index. -1 means follow the calendar.
     private val manualIndex = AtomicInteger(-1)
 
-    override suspend fun onTap(settings: Settings) {
+    // Background loading for tap-to-refresh so the engine never blocks on network.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val isLoading = AtomicBoolean(false)
+    private var loadJob: Job? = null
+
+    override suspend fun onTap(settings: Settings): Boolean {
         manualIndex.incrementAndGet()
+        // Invalidate cached details so the next render knows we need fresh data.
+        cachedDetails = null
+        isLoading.set(true)
+
+        loadJob?.cancel()
+        loadJob = scope.launch {
+            try {
+                ensureDataLoaded(settings)
+            } finally {
+                isLoading.set(false)
+            }
+        }
+        return true // Ask the engine to reset the rotation timer.
     }
 
     override suspend fun render(settings: Settings): PixelMatrix {
+        if (isLoading.get()) {
+            return renderLoading()
+        }
+
         val listId = settings.kanjiList.ifBlank { "joyo" }
 
         val kanjiList = try {
@@ -108,6 +138,62 @@ class KanjiOfDayFace(private val api: KanjiApi = KanjiApi()) : Face {
                 color = Color(0xFFFFFF00),
                 scrollOffset = scrollOffset
             )
+    }
+
+    private suspend fun ensureDataLoaded(settings: Settings) {
+        val listId = settings.kanjiList.ifBlank { "joyo" }
+        if (cachedKanjiList == null || cachedListId != listId) {
+            cachedListId = listId
+            cachedKanjiList = api.fetchList(listId)
+            cachedDetails = null
+            cachedDetailsDay = -1
+            manualIndex.set(-1)
+            cachedManualIndex = -1
+        }
+        val kanjiList = cachedKanjiList ?: return
+        if (kanjiList.isEmpty()) return
+
+        val today = LocalDate.now()
+        val dayOfYear = today.dayOfYear
+        val override = manualIndex.get()
+        if (override != cachedManualIndex) {
+            cachedDetails = null
+            cachedManualIndex = override
+        }
+        val index = if (override >= 0) override.mod(kanjiList.size) else (dayOfYear - 1).mod(kanjiList.size)
+        val dailyKanji = kanjiList[index]
+
+        if (cachedDetails == null || cachedDetails?.kanji != dailyKanji || cachedDetailsDay != dayOfYear) {
+            cachedDetails = api.fetchDetails(dailyKanji)
+            cachedDetailsDay = dayOfYear
+        }
+    }
+
+    private fun renderLoading(): PixelMatrix {
+        val frame = ((System.currentTimeMillis() / 150) % 8).toInt()
+        val cx = matrixWidth / 2
+        val cy = matrixHeight / 2
+        val radiusX = 12.0
+        val radiusY = 4.0
+
+        return PixelMatrix.empty(width = matrixWidth, height = matrixHeight).mutate {
+            for (i in 0 until 8) {
+                val active = (i == frame)
+                if (!active) continue
+                val angle = Math.toRadians((i * 45).toDouble())
+                val x = (cx + radiusX * cos(angle)).toInt()
+                val y = (cy + radiusY * sin(angle)).toInt()
+                if (x in 0 until matrixWidth && y in 0 until matrixHeight) {
+                    this[x, y] = Color(0xFFFFFFFF)
+                }
+                // Glow neighbours for a softer LED look.
+                val glow = Color(0xFF888888)
+                if (x - 1 in 0 until matrixWidth && y in 0 until matrixHeight) this[x - 1, y] = glow
+                if (x + 1 in 0 until matrixWidth && y in 0 until matrixHeight) this[x + 1, y] = glow
+                if (x in 0 until matrixWidth && y - 1 in 0 until matrixHeight) this[x, y - 1] = glow
+                if (x in 0 until matrixWidth && y + 1 in 0 until matrixHeight) this[x, y + 1] = glow
+            }
+        }
     }
 
     private fun buildReading(details: KanjiDetails): String {
