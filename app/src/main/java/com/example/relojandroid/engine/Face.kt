@@ -17,6 +17,8 @@ interface Face {
     /**
      * Called when the user taps the screen while this face is active.
      * Faces can use this to refresh their content or toggle a state.
+     * Return true to ask the engine to reset the rotation timer so the user
+     * has more time to see the updated content.
      */
-    suspend fun onTap(settings: Settings) {}
+    suspend fun onTap(settings: Settings): Boolean = false
 }
