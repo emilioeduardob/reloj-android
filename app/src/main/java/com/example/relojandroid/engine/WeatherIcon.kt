@@ -62,21 +62,21 @@ private val patterns: Map<WeatherIcon, List<String>> = mapOf(
     WeatherIcon.PARTLY_CLOUDY_DAY to listOf(
         "...YY...",
         ".YYYYYY.",
-        "..YYYY..",
-        ".YYYYYY.",
         "YYYYYYYY",
-        ".YYYYYY.",
-        "..YYYY..",
+        "WWWWYYYY",
+        "WWWWWWYY",
+        ".WWWWWW.",
+        "........",
         "........"
     ),
     WeatherIcon.PARTLY_CLOUDY_NIGHT to listOf(
-        "....YYYY",
-        "...YYYYY",
-        "..YYYY..",
-        "..YYYYYY",
-        "..YYYYYY",
-        "...YYYY.",
-        "....YY..",
+        "....WWWW",
+        "...WWWWW",
+        "..WW....",
+        "GGGGWWWW",
+        "GGGGWWWW",
+        ".GGGGWW.",
+        "........",
         "........"
     ),
     WeatherIcon.CLOUDY to listOf(

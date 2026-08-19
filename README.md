@@ -49,6 +49,48 @@ Install on a connected device:
 ./gradlew installDebug
 ```
 
+## Screenshots
+
+Weather face reference images for all 9 WMO conditions (auto-generated from the
+pixel-art definitions):
+
+| Condition | Screenshot |
+|-----------|------------|
+| Clear Day | ![Clear Day](docs/screenshots/weather/weather_clear_day.png) |
+| Clear Night | ![Clear Night](docs/screenshots/weather/weather_clear_night.png) |
+| Partly Cloudy Day | ![Partly Cloudy Day](docs/screenshots/weather/weather_partly_cloudy_day.png) |
+| Partly Cloudy Night | ![Partly Cloudy Night](docs/screenshots/weather/weather_partly_cloudy_night.png) |
+| Cloudy | ![Cloudy](docs/screenshots/weather/weather_cloudy.png) |
+| Rain | ![Rain](docs/screenshots/weather/weather_rain.png) |
+| Snow | ![Snow](docs/screenshots/weather/weather_snow.png) |
+| Storm | ![Storm](docs/screenshots/weather/weather_storm.png) |
+| Fog | ![Fog](docs/screenshots/weather/weather_fog.png) |
+
+### Generating screenshots
+
+Unit tests under `app/src/test/java/com/example/relojandroid/screenshots/`
+render each face directly from the `PixelMatrix` definitions to PNG. To regenerate
+all weather screenshots:
+
+```bash
+./gradlew app:testDebugUnitTest --tests WeatherFaceScreenshotTest
+```
+
+Outputs are written to `app/build/screenshots/weather/` and also checked into
+`docs/screenshots/weather/` for reference.
+
+## Configure
+
+```bash
+./gradlew assembleDebug
+```
+
+Install on a connected device:
+
+```bash
+./gradlew installDebug
+```
+
 ## Configure
 
 1. Open the app on the phone.
