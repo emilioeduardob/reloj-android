@@ -70,13 +70,13 @@ private val patterns: Map<WeatherIcon, List<String>> = mapOf(
         "........"
     ),
     WeatherIcon.PARTLY_CLOUDY_NIGHT to listOf(
-        "....WWWW",
-        "...WWWWW",
-        "..WW....",
+        "..WWWW..",
+        ".WWWWWW.",
+        "WWWWWWWW",
+        "WWWWWWWW",
         "GGGGWWWW",
         "GGGGWWWW",
         ".GGGGWW.",
-        "........",
         "........"
     ),
     WeatherIcon.CLOUDY to listOf(
