@@ -24,6 +24,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.relojandroid.engine.PixelMatrix
 import kotlinx.coroutines.flow.StateFlow
+import android.view.View
 import android.view.WindowManager
 import kotlin.math.abs
 
@@ -157,17 +158,44 @@ private fun PixelCanvas(
 private fun KeepScreenOn() {
     val context = LocalContext.current
     DisposableEffect(Unit) {
-        val window = (context as? android.app.Activity)?.window
-        window?.let {
-            it.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            WindowInsetsControllerCompat(it, it.decorView).let { controller ->
+        val activity = context as? android.app.Activity
+        val window = activity?.window
+        val decorView = window?.decorView ?: return@DisposableEffect onDispose { }
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // Modern API (API 30+)
+        val controller = WindowInsetsControllerCompat(window, decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        // Legacy immersive-sticky flags (still the most reliable on API 28–29)
+        @Suppress("DEPRECATION")
+        val legacyFlags = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            )
+        @Suppress("DEPRECATION")
+        decorView.systemUiVisibility = legacyFlags
+
+        // Re-hide immediately if the bars pop back up (e.g. on touch or volume change)
+        @Suppress("DEPRECATION")
+        val visibilityListener = View.OnSystemUiVisibilityChangeListener { visibility ->
+            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
                 controller.hide(WindowInsetsCompat.Type.systemBars())
-                controller.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                decorView.systemUiVisibility = legacyFlags
             }
         }
+        decorView.setOnSystemUiVisibilityChangeListener(visibilityListener)
+
         onDispose {
-            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            decorView.setOnSystemUiVisibilityChangeListener(null)
         }
     }
 }
