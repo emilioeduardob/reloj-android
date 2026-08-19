@@ -41,23 +41,23 @@ private val blue = Color(0xFF00AAFF)
 private val patterns: Map<WeatherIcon, List<String>> = mapOf(
     WeatherIcon.CLEAR_DAY to listOf(
         "...YY...",
-        ".Y.YY.Y.",
-        "YY.YY.YY",
+        ".YYYYYY.",
         "YYYYYYYY",
         "YYYYYYYY",
-        "YY.YY.YY",
-        ".Y.YY.Y.",
+        "YYYYYYYY",
+        "YYYYYYYY",
+        ".YYYYYY.",
         "...YY..."
     ),
     WeatherIcon.CLEAR_NIGHT to listOf(
-        "....YYYY",
-        ".....YYY",
-        "......YY",
-        "......YY",
-        "......YY",
-        ".....YYY",
-        "....YYYY",
-        "........"
+        "..WWW...",
+        ".WWWW...",
+        "WWWW....",
+        "WWW.....",
+        "WWW.....",
+        "WWWW....",
+        ".WWWW...",
+        "..WWW..."
     ),
     WeatherIcon.PARTLY_CLOUDY_DAY to listOf(
         "...YY...",
